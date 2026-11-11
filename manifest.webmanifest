@@ -1,0 +1,18 @@
+{
+  "id":"./",
+  "name":"المنقذ الرقمي — مرتضى مصطفى العوادي",
+  "short_name":"المنقذ الرقمي",
+  "description":"نتعلّم السلامة بمهمات تفاعلية يشارك في إعدادها وليّ الأمر.",
+  "lang":"ar",
+  "dir":"rtl",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f7f8f2",
+  "theme_color":"#0d7667",
+  "icons":[
+    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}

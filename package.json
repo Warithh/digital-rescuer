@@ -1,0 +1,12 @@
+{
+  "name": "digital-rescuer",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "المنقذ الرقمي — مشروع مرتضى مصطفى العوادي",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/state.test.mjs",
+    "preview": "node scripts/serve.mjs"
+  }
+}
