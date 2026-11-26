@@ -10,6 +10,8 @@ import {
   storageKey,
   makePin,
   validateGameQuestions,
+  makeRecoveryCode,
+  normalizeRecoveryCode,
 } from "../state.js";
 
 test("first correct answer earns points once; wrong answers are recorded without deductions", () => {
@@ -113,4 +115,16 @@ test("parent game questions are validated, kept in backups, and old files still 
   assert.throws(() => validateGameQuestions([{ ...question, answers: ["٧", "٧", "٦"] }]));
   assert.throws(() => validateGameQuestions([{ ...question, level: 4 }]));
   assert.throws(() => validateGameQuestions([question, question]));
+});
+
+test("recovery code survives saving, is never exported with the PIN, and normalizes input", () => {
+  const data = newData();
+  const salt = "a".repeat(32), hash = "b".repeat(64);
+  const withRecovery = validateData({ ...data, pin: { salt, hash, recovery: { salt, hash } } });
+  assert.deepEqual(withRecovery.pin.recovery, { salt, hash });
+  assert.equal(validateData({ ...data, pin: { salt, hash } }).pin.recovery, undefined);
+  assert.throws(() => validateData({ ...data, pin: { salt, hash, recovery: { salt: "x", hash } } }));
+  const code = makeRecoveryCode();
+  assert.match(code, /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+  assert.equal(normalizeRecoveryCode(code.toLowerCase().replace(/-/g, " ")), code.replace(/-/g, ""));
 });

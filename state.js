@@ -159,7 +159,10 @@ export function validateData(value) {
     pin !== null &&
     (!pin ||
       !/^[a-f0-9]{32}$/.test(pin.salt) ||
-      !/^[a-f0-9]{64}$/.test(pin.hash))
+      !/^[a-f0-9]{64}$/.test(pin.hash) ||
+      (pin.recovery != null &&
+        (!/^[a-f0-9]{32}$/.test(pin.recovery.salt) ||
+          !/^[a-f0-9]{64}$/.test(pin.recovery.hash))))
   )
     throw Error("إعداد رمز وليّ الأمر غير صالح.");
   const catalogVersion =
@@ -174,7 +177,15 @@ export function validateData(value) {
     attempts,
     childName: value.childName.trim(),
     soundAllowed: value.soundAllowed,
-    pin: pin ? { salt: pin.salt, hash: pin.hash } : null,
+    pin: pin
+      ? {
+          salt: pin.salt,
+          hash: pin.hash,
+          ...(pin.recovery
+            ? { recovery: { salt: pin.recovery.salt, hash: pin.recovery.hash } }
+            : {}),
+        }
+      : null,
     gameQuestions: validateGameQuestions(value.gameQuestions ?? []),
   };
 }
@@ -258,6 +269,19 @@ export async function makePin(pin, salt) {
     b.toString(16).padStart(2, "0"),
   ).join("");
 }
+// رمز استعادة يكتبه الأب على ورقة: 12 حرفًا ورقمًا بلا أحرف متشابهة.
+export function makeRecoveryCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chars = Array.from(
+    crypto.getRandomValues(new Uint8Array(12)),
+    (b) => alphabet[b % alphabet.length],
+  ).join("");
+  return chars.match(/.{4}/g).join("-");
+}
+export const normalizeRecoveryCode = (code) =>
+  String(code || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
 export function makeSalt() {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
     b.toString(16).padStart(2, "0"),

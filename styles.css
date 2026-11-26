@@ -3314,3 +3314,98 @@ input[type="radio"] {
     flex-wrap: wrap;
   }
 }
+
+/* نسيت الرمز: رابط صغير باهت كي لا يلفت انتباه الطفل. */
+.forgot-pin {
+  margin-top: 26px;
+  text-align: right;
+}
+.forgot-pin summary {
+  width: fit-content;
+  margin-inline-start: auto;
+  color: #c3ccb9;
+  font-size: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+.forgot-pin summary::-webkit-details-marker {
+  display: none;
+}
+.forgot-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.forgot-body > p {
+  color: #7f8f78;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.parent-gate .forgot-body form {
+  max-width: none;
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfdf8;
+}
+.forgot-body h3 {
+  margin-bottom: 8px;
+  color: #50744e;
+  font-size: 14px;
+}
+.forgot-body label {
+  display: block;
+  margin: 10px 0 6px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.forgot-body small {
+  display: block;
+  margin-top: 6px;
+  color: #a07a3c;
+  font-size: 11px;
+}
+.parent-gate .forgot-body .secondary {
+  width: 100%;
+  justify-content: center;
+  margin-top: 14px;
+}
+.parent-gate #adult-sentence {
+  direction: rtl;
+}
+.recovery-notice {
+  border-color: #ecd9a0;
+  background: #fffaf0;
+  text-align: center;
+}
+.recovery-notice p {
+  max-width: 560px;
+  margin: 8px auto 0;
+  color: #7f7a5a;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.recovery-code {
+  display: block;
+  width: fit-content;
+  margin: 18px auto;
+  padding: 12px 18px;
+  border: 2px dashed #d9b85f;
+  border-radius: 12px;
+  background: #fff;
+  color: #5a4a1a;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 22px;
+  letter-spacing: 2px;
+  user-select: all;
+}
+.recovery-notice .primary {
+  margin: 0 auto;
+}
+@media (max-width: 650px) {
+  .recovery-code {
+    font-size: 17px;
+    letter-spacing: 1px;
+  }
+}

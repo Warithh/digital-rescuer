@@ -11,6 +11,8 @@ import {
   makePin,
   makeSalt,
   validateGameQuestions,
+  makeRecoveryCode,
+  normalizeRecoveryCode,
 } from "./state.js";
 
 // ١. نقرأ البيانات ونحفظ حالة الشاشة التي يشاهدها المستخدم.
@@ -34,6 +36,8 @@ let draft = null;
 let quiz = null;
 let wordGame = null;
 let pendingWordGame = false;
+let recoveryToShow = null;
+let adultCheck = null;
 let soundOn = false;
 let voiceWarningShown = false;
 let audioContext;
@@ -402,16 +406,41 @@ function renderAbout() {
 // ٣. لوحة وليّ الأمر: نتحقّق من الرمز قبل عرض أدوات التعديل.
 function renderParent() {
   if (!parentUnlocked)
-    return `${heading("أنت تعرف طفلك أكثر", "مساحة وليّ الأمر", "جهّز لطفلك رحلة يتعلّم فيها ما يحتاج إليه، بطريقته الخاصة.")}<section class="parent-gate panel"><span class="gate-icon">${icon("lock", 35)}</span><h2>${data.pin ? "مرحبًا بعودتك" : "مغامرته تبدأ بإعدادك"}</h2><p>${data.pin ? "اكتب رمزك لفتح لوحة الإدارة." : "اختر رمزًا خاصًا لحماية لوحة التعديل."}</p><form id="pin-form"><label for="parent-pin">رمز وليّ الأمر</label><input id="parent-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="${data.pin ? "current-password" : "new-password"}" placeholder="من 4 إلى 8 أرقام إنجليزية">${!data.pin ? '<label for="confirm-pin">تأكيد الرمز</label><input id="confirm-pin" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password" placeholder="اكتب الرمز مرة أخرى">' : ""}<button class="primary">${data.pin ? "فتح اللوحة" : "حفظ الرمز والبدء"} ${icon("arrow", 18)}</button><p id="pin-error" role="alert" class="form-error" hidden></p></form><p class="hint">قفل محلي لهذا المتصفح، وليس حسابًا على الإنترنت. احتفظ بالرمز؛ لا توجد خدمة لاستعادته.</p></section>`;
+    return `${heading("أنت تعرف طفلك أكثر", "مساحة وليّ الأمر", "جهّز لطفلك رحلة يتعلّم فيها ما يحتاج إليه، بطريقته الخاصة.")}<section class="parent-gate panel"><span class="gate-icon">${icon("lock", 35)}</span><h2>${data.pin ? "مرحبًا بعودتك" : "مغامرته تبدأ بإعدادك"}</h2><p>${data.pin ? "اكتب رمزك لفتح لوحة الإدارة." : "اختر رمزًا خاصًا لحماية لوحة التعديل."}</p><form id="pin-form"><label for="parent-pin">رمز وليّ الأمر</label><input id="parent-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="${data.pin ? "current-password" : "new-password"}" placeholder="من 4 إلى 8 أرقام إنجليزية">${!data.pin ? '<label for="confirm-pin">تأكيد الرمز</label><input id="confirm-pin" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password" placeholder="اكتب الرمز مرة أخرى">' : ""}<button class="primary">${data.pin ? "فتح اللوحة" : "حفظ الرمز والبدء"} ${icon("arrow", 18)}</button><p id="pin-error" role="alert" class="form-error" hidden></p></form><p class="hint">قفل محلي لهذا المتصفح، وليس حسابًا على الإنترنت. عند إنشاء الرمز ستحصل على رمز استعادة؛ احتفظ به.</p>${data.pin ? renderForgotPin() : ""}</section>`;
   return `${heading("مهمات من تأليفك، تعلّم يناسب طفلك", "لوحة وليّ الأمر", "كل شيء جاهز لتصنع رحلة خاصة لطفلك.")}
   <div class="parent-toolbar"><span class="saved-label">${icon("check", 18)} ${storageIssue ? "هناك بيانات تحتاج إلى استعادة" : "الحفظ على هذا المتصفح والجهاز"}</span><button class="secondary" data-action="lock">${icon("lock", 17)} قفل اللوحة</button></div>
+  ${renderRecoveryNotice()}
   ${storageIssue ? `<div class="recovery-note">${e(storageIssue)}<button class="secondary" data-action="fresh-start">بدء جديد بعد التأكيد</button></div>` : ""}
   <section class="parent-overview"><div><strong>${number(data.missions.length)}</strong><span>مهمة في مكتبتك</span></div><div><strong>${number(availableMissions().length)}</strong><span>مهمة ظاهرة للطفل</span></div><div><strong>${number(data.completed.length)}</strong><span>مهمة أنجزها طفلك</span></div><div><strong>${number(totalPoints(data))}</strong><span>مجموع نقاط الطفل</span></div></section>
   <section class="panel"><div class="section-heading"><div><span class="eyebrow">رحلة تحمل اسمه</span><h2>إعدادات طفلك</h2></div></div><form id="settings-form" class="settings-form"><div class="form-field"><label for="child-name">اسم الطفل</label><input id="child-name" name="childName" maxlength="40" value="${e(data.childName)}" placeholder="اختياري، مثل: علي"></div><label class="checkbox-label"><input name="soundAllowed" type="checkbox" ${data.soundAllowed ? "checked" : ""}> السماح بالقراءة الصوتية</label><button class="primary">حفظ الإعدادات</button></form></section>
   <section class="panel"><div class="section-heading"><div><span class="eyebrow">كل موقف تكتبه قد يصنع فرقًا</span><h2>مكتبة المهمات</h2><p>اكتب، عدّل، أخفِ، ورتّب. جرّب المهمات دون التأثير في نقاط الطفل.</p></div><div class="library-actions"><button class="school-template" data-action="school-template" ${data.missions.length >= 100 ? "disabled" : ""}>🎒 مهمة أمان المدرسة</button><button class="primary" data-action="add" ${data.missions.length >= 100 ? "disabled" : ""}>${icon("plus", 18)} إضافة مهمة</button></div></div><div class="managed-list">${data.missions.map((m, index) => `<article class="managed-mission"><span class="managed-emoji ${e(m.color)}">${e(m.emoji)}</span><div class="managed-info"><h3>${e(m.title)}</h3><p>${e(m.category)} · ${number(m.points)} نقطة · ${data.completed.includes(m.id) ? "مكتملة" : "لم تكتمل"}</p><small>إجابات صحيحة: ${number(data.attempts[m.id]?.correct || 0)} · محاولات تحتاج مراجعة: ${number(data.attempts[m.id]?.wrong || 0)}</small></div><div class="manage-buttons"><button class="visibility-button ${m.enabled ? "visible" : ""}" data-action="visibility" data-id="${e(m.id)}" aria-pressed="${m.enabled}">${m.enabled ? "✓ ظاهرة" : "مخفية"}</button><button class="small-button" data-action="move-up" data-id="${e(m.id)}" aria-label="تقديم ${e(m.title)}" ${index === 0 ? "disabled" : ""}>↑</button><button class="small-button" data-action="move-down" data-id="${e(m.id)}" aria-label="تأخير ${e(m.title)}" ${index === data.missions.length - 1 ? "disabled" : ""}>↓</button><button class="small-button" data-action="practice" data-id="${e(m.id)}" aria-label="تجربة ${e(m.title)}">تجربة</button><button class="small-button" data-action="edit" data-id="${e(m.id)}" aria-label="تعديل ${e(m.title)}">تعديل</button><button class="small-button danger" data-action="delete" data-id="${e(m.id)}" aria-label="حذف ${e(m.title)}">حذف</button></div></article>`).join("") || '<p class="empty-state">أضف أول مهمة لطفلك.</p>'}</div></section>
   ${draft ? renderEditor() : ""}
   ${renderGameQuestions()}
-  <div class="parent-tools"><section class="panel"><h2>التقدّم والنسخ الاحتياطي</h2><p>انقل مهمات طفلك وتقدّمه إلى جهاز آخر بنسخة احتياطية. رمز اللوحة لا يُصدَّر.</p><div class="tool-buttons"><button class="secondary" data-action="export">↓ تنزيل نسخة احتياطية</button><label class="secondary file-button">↑ استعادة نسخة<input type="file" id="backup-file" accept=".json,application/json" aria-label="ملف النسخة الاحتياطية"></label><button class="secondary danger" data-action="reset-progress">إعادة تقدّم الطفل</button><button class="secondary danger" data-action="reset-missions">استعادة المهمات الأصلية</button></div><p class="hint">إخفاء المهمة لا يحذف نقاطها المكتسبة. تعديل سؤال أو إجابات مهمة يعيد تقدّمها وحدها بعد التأكيد.</p></section><section class="panel"><h2>تغيير رمز وليّ الأمر</h2><form id="change-pin-form"><label for="new-pin">الرمز الجديد</label><input id="new-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="new-password"><label for="new-repeat">تأكيد الرمز الجديد</label><input id="new-repeat" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password"><button class="secondary">حفظ الرمز الجديد</button><p class="form-error" role="alert" hidden></p></form></section></div>`;
+  <div class="parent-tools"><section class="panel"><h2>التقدّم والنسخ الاحتياطي</h2><p>انقل مهمات طفلك وتقدّمه إلى جهاز آخر بنسخة احتياطية. رمز اللوحة لا يُصدَّر.</p><div class="tool-buttons"><button class="secondary" data-action="export">↓ تنزيل نسخة احتياطية</button><label class="secondary file-button">↑ استعادة نسخة<input type="file" id="backup-file" accept=".json,application/json" aria-label="ملف النسخة الاحتياطية"></label><button class="secondary danger" data-action="reset-progress">إعادة تقدّم الطفل</button><button class="secondary danger" data-action="reset-missions">استعادة المهمات الأصلية</button></div><p class="hint">إخفاء المهمة لا يحذف نقاطها المكتسبة. تعديل سؤال أو إجابات مهمة يعيد تقدّمها وحدها بعد التأكيد.</p></section><section class="panel"><h2>تغيير رمز وليّ الأمر</h2><form id="change-pin-form"><label for="new-pin">الرمز الجديد</label><input id="new-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="new-password"><label for="new-repeat">تأكيد الرمز الجديد</label><input id="new-repeat" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password"><button class="secondary">حفظ الرمز الجديد</button><p class="form-error" role="alert" hidden></p></form><p class="hint">${data.pin?.recovery ? "يوجد رمز استعادة محفوظ لهذا الجهاز." : "لا يوجد رمز استعادة بعد."}</p><button class="secondary" data-action="new-recovery">🔑 إنشاء رمز استعادة جديد</button></section></div>`;
+}
+// «نسيت الرمز؟» رابط صغير باهت أسفل القفل، وطريقتان للكبار فقط.
+function renderForgotPin() {
+  if (!adultCheck) adultCheck = { a: randomInt(13, 49), b: randomInt(13, 49) };
+  return `<details class="forgot-pin"><summary>نسيت الرمز؟</summary><div class="forgot-body"><p>الطريقتان تعيدان رمز الدخول فقط. تقدّم الطفل ومهماتك وأسئلتك تبقى كما هي.</p><form id="recovery-form"><h3>١. رمز الاستعادة</h3><label for="recovery-code">رمز الاستعادة الذي حفظته عند إنشاء الرمز</label><input id="recovery-code" name="code" autocomplete="off" maxlength="20" placeholder="XXXX-XXXX-XXXX" ${data.pin.recovery ? "" : "disabled"}>${data.pin.recovery ? "" : '<small>لم يُنشأ رمز استعادة على هذا الجهاز. استخدم الطريقة الثانية.</small>'}<button class="secondary" ${data.pin.recovery ? "" : "disabled"}>تحقّق من رمز الاستعادة</button><p class="form-error" role="alert" hidden></p></form><form id="adult-reset-form"><h3>٢. سؤال الكبار</h3><label for="adult-math">كم يساوي ${adultCheck.a} × ${adultCheck.b} ؟</label><input id="adult-math" name="math" inputmode="numeric" autocomplete="off" maxlength="5" required><label for="adult-sentence">اكتب الجملة كما هي: <b>أنا وليّ الأمر وأريد رمزًا جديدًا</b></label><input id="adult-sentence" name="sentence" autocomplete="off" maxlength="60" required dir="rtl"><button class="secondary">إعادة تعيين الرمز</button><p class="form-error" role="alert" hidden></p></form></div></details>`;
+}
+function renderRecoveryNotice() {
+  if (!recoveryToShow) return "";
+  return `<section class="panel recovery-notice" role="alert"><h2>🔑 رمز الاستعادة الخاص بك</h2><p>إذا نسيت رمز اللوحة تستطيع الدخول بهذا الرمز من «نسيت الرمز؟». اكتبه على ورقة أو صوّره واحفظه بعيدًا عن الطفل. لن يظهر مرة أخرى.</p><strong class="recovery-code" dir="ltr">${e(recoveryToShow)}</strong><button class="primary" data-action="recovery-done">كتبته وحفظته ${icon("check", 18)}</button></section>`;
+}
+async function createRecovery() {
+  const code = makeRecoveryCode();
+  const salt = makeSalt();
+  data.pin = { ...data.pin, recovery: { salt, hash: await makePin(normalizeRecoveryCode(code), salt) } };
+  save();
+  recoveryToShow = code;
+}
+function resetPinAfterRecovery() {
+  data.pin = null;
+  adultCheck = null;
+  save();
+  render();
+  document.querySelector("#parent-pin")?.focus();
+  notify("أُلغي الرمز القديم. اختر رمزًا جديدًا الآن.");
 }
 function renderGameQuestions() {
   const levels = ["١: الأرقام", "٢: الكلمات", "٣: الأمان"];
@@ -524,6 +553,8 @@ document.addEventListener("click", async (event) => {
     "fresh-start",
     "school-template",
     "delete-game-question",
+    "recovery-done",
+    "new-recovery",
   ];
   if (parentActions.includes(action) && !parentUnlocked) return;
   if (action === "sound") {
@@ -658,6 +689,16 @@ document.addEventListener("click", async (event) => {
       render();
     }
   }
+  if (action === "recovery-done") {
+    recoveryToShow = null;
+    render();
+  }
+  if (action === "new-recovery")
+    ask("سيتوقف رمز الاستعادة القديم عن العمل، ويظهر رمز جديد مرة واحدة. هل تريد المتابعة؟", async () => {
+      await createRecovery();
+      render();
+      window.scrollTo(0, 0);
+    });
   if (action === "delete-game-question" && parentUnlocked)
     ask("هل تريد حذف هذا السؤال من اللعبة؟", () => {
       data.gameQuestions = data.gameQuestions.filter((q) => q.id !== id);
@@ -755,9 +796,31 @@ document.addEventListener("submit", async (event) => {
         const salt = makeSalt();
         data.pin = { salt, hash: await makePin(pin, salt) };
         save();
+        await createRecovery();
       }
+      adultCheck = null;
       parentUnlocked = true;
       render();
+      window.scrollTo(0, 0);
+    }
+    if (form.id === "recovery-form" && data.pin?.recovery) {
+      const code = normalizeRecoveryCode(values.get("code"));
+      if (code.length !== 12 || (await makePin(code, data.pin.recovery.salt)) !== data.pin.recovery.hash)
+        throw Error("رمز الاستعادة غير صحيح.");
+      resetPinAfterRecovery();
+    }
+    if (form.id === "adult-reset-form" && data.pin && adultCheck) {
+      const digits = String(values.get("math") || "").replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+      const sentence = String(values.get("sentence") || "").replace(/[\u064B-\u0652]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/\s+/g, " ").trim();
+      const expected = "انا ولي الامر واريد رمزا جديدا";
+      if (Number(digits) !== adultCheck.a * adultCheck.b || sentence !== expected) {
+        adultCheck = null;
+        render();
+        document.querySelector(".forgot-pin")?.setAttribute("open", "");
+        notify("الإجابة أو الجملة غير صحيحة. جرّب السؤال الجديد.", true);
+        return;
+      }
+      resetPinAfterRecovery();
     }
     if (!parentUnlocked) return;
     if (form.id === "game-question-form") {
@@ -790,7 +853,7 @@ document.addEventListener("submit", async (event) => {
       if (!/^[0-9]{4,8}$/.test(pin) || pin !== values.get("repeat"))
         throw Error("اكتب رمزًا من 4 إلى 8 أرقام إنجليزية وأكّده بنفس القيمة.");
       const salt = makeSalt();
-      data.pin = { salt, hash: await makePin(pin, salt) };
+      data.pin = { ...data.pin, salt, hash: await makePin(pin, salt) };
       save();
       form.reset();
       notify("حُفظ الرمز الجديد.");
