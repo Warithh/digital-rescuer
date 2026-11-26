@@ -69,6 +69,20 @@ test("migrates old progress and accepts v2 backups and empty mission lists", () 
   assert.equal(validateData(empty).missions.length, 0);
   assert.equal(validateData(newData()).missions.length, newData().missions.length);
 });
+test("upgrades an older saved catalog without deleting parent missions or progress", () => {
+  const old = newData();
+  old.catalogVersion = 1;
+  old.missions = old.missions.slice(0, 12);
+  old.completed = ["fire"];
+  old.awards = { fire: 100 };
+  const storage = {
+    getItem: (key) => (key === storageKey ? JSON.stringify(old) : null),
+  };
+  const loaded = loadData(storage).data;
+  assert.equal(loaded.catalogVersion, 2);
+  assert.equal(loaded.missions.length, newData().missions.length);
+  assert.deepEqual(loaded.completed, ["fire"]);
+});
 test("PIN digest stays compatible with previous SHA-256 salt scheme", async () => {
   const value = await makePin("1234", "00112233445566778899aabbccddeeff");
   assert.equal(value.length, 64);

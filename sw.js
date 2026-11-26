@@ -12,6 +12,7 @@ const FILES = [
   "./assets/icon.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
+  "./assets/festival-qr.png",
   "./assets/fonts.css",
 ];
 self.addEventListener("install", (event) => {

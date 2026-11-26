@@ -5,6 +5,7 @@ export const storageKey = "digital-rescuer-family-v2";
 export const colors = ["orange", "yellow", "blue", "purple", "teal", "pink"];
 export function newData() {
   return {
+    catalogVersion: 2,
     missions: structuredClone(defaultMissions),
     completed: [],
     awards: {},
@@ -122,7 +123,12 @@ export function validateData(value) {
       !/^[a-f0-9]{64}$/.test(pin.hash))
   )
     throw Error("إعداد رمز وليّ الأمر غير صالح.");
+  const catalogVersion =
+    Number.isInteger(value.catalogVersion) && value.catalogVersion >= 1 && value.catalogVersion <= 2
+      ? value.catalogVersion
+      : 1;
   return {
+    catalogVersion,
     missions,
     completed,
     awards,
@@ -136,8 +142,20 @@ export function validateData(value) {
 export function loadData(storage) {
   try {
     const saved = storage.getItem(storageKey);
-    if (saved !== null)
-      return { data: validateData(JSON.parse(saved)), issue: "" };
+    if (saved !== null) {
+      const data = validateData(JSON.parse(saved));
+      // تحديث واحد فقط يضيف مهمات المشروع الجديدة ويحفظ ما أضافه وليّ الأمر.
+      if (data.catalogVersion < 2) {
+        const knownIds = new Set(data.missions.map((mission) => mission.id));
+        data.missions.push(
+          ...structuredClone(defaultMissions).filter(
+            (mission) => !knownIds.has(mission.id),
+          ),
+        );
+        data.catalogVersion = 2;
+      }
+      return { data, issue: "" };
+    }
     const old = JSON.parse(
       storage.getItem("digital-rescuer-murtadha-v1") || "{}",
     );

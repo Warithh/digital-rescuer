@@ -33,6 +33,7 @@ let draft = null;
 let quiz = null;
 let soundOn = false;
 let voiceWarningShown = false;
+let audioContext;
 let confirmation = null;
 let toastTimer;
 const main = document.querySelector("#main");
@@ -40,6 +41,7 @@ const quizDialog = document.querySelector("#quiz-dialog");
 const confirmDialog = document.querySelector("#confirm-dialog");
 const navigation = [
   { id: "home", title: "الرئيسية", icon: "home" },
+  { id: "festival", title: "المهرجان", icon: "star" },
   { id: "missions", title: "المهمات", icon: "shield" },
   { id: "awards", title: "إنجازاتي", icon: "award" },
   { id: "about", title: "عن المشروع", icon: "book" },
@@ -118,9 +120,12 @@ function ask(message, run) {
 }
 function getArabicVoice() {
   if (!("speechSynthesis" in window)) return null;
-  return window.speechSynthesis
+  const arabicVoices = window.speechSynthesis
     .getVoices()
-    .find((voice) => /^ar([_-]|$)/i.test(voice.lang));
+    .filter((voice) => /^ar([_-]|$)/i.test(voice.lang));
+  // أسماء الأصوات النسائية العربية الشائعة في Chrome وEdge وAndroid.
+  const feminine = /salma|hoda|layla|laila|zariyah|fatima|female|woman/i;
+  return arabicVoices.find((voice) => feminine.test(voice.name)) || arabicVoices[0] || null;
 }
 function speak(text) {
   if (!soundOn || !data.soundAllowed || !("speechSynthesis" in window))
@@ -134,7 +139,8 @@ function speak(text) {
     notify("لم نجد صوتًا عربيًا مثبتًا؛ قد تختلف جودة النطق. النص ظاهر دائمًا للطفل.", true);
   }
   speech.lang = arabicVoice?.lang || "ar-SA";
-  speech.rate = 0.85;
+  speech.rate = 0.8;
+  speech.pitch = 1.08;
   speech.onerror = () => {
     if (!voiceWarningShown) {
       voiceWarningShown = true;
@@ -144,6 +150,36 @@ function speak(text) {
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(speech);
   return true;
+}
+// مؤثرات قصيرة تعمل دون إنترنت بعد تفاعل الطفل مع الزر.
+function playSound(kind) {
+  if (!soundOn) return;
+  try {
+    const AudioEngine = window.AudioContext || window.webkitAudioContext;
+    if (!AudioEngine) return;
+    audioContext ||= new AudioEngine();
+    if (audioContext.state === "suspended") audioContext.resume();
+    const notes =
+      kind === "success"
+        ? [523, 659, 784]
+        : kind === "retry"
+          ? [220, 185]
+          : [392, 523];
+    notes.forEach((frequency, index) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = kind === "retry" ? "sine" : "triangle";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, audioContext.currentTime + index * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.09, audioContext.currentTime + index * 0.1 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + index * 0.1 + 0.18);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(audioContext.currentTime + index * 0.1);
+      oscillator.stop(audioContext.currentTime + index * 0.1 + 0.2);
+    });
+  } catch {
+    // لا نوقف اللعبة إذا كان المتصفح يمنع الصوت.
+  }
 }
 
 // ٢. نرسم الشاشات باستخدام دوال صغيرة ذات أسماء واضحة.
@@ -164,6 +200,7 @@ function render() {
   );
   const screens = {
     home: renderHome,
+    festival: renderFestival,
     missions: renderMissions,
     awards: renderAwards,
     about: renderAbout,
@@ -196,9 +233,14 @@ function renderHome() {
     availableMissions()[0];
   return `${heading("كل اختيار آمن يصنع بطلًا", data.childName ? `أهلًا بالبطل ${e(data.childName)}! 👋` : "أهلًا يا بطل السلامة! 👋", "مغامرات صغيرة، معرفة كبيرة. لنكتشف الاختيار الأكثر أمانًا معًا.")}
   ${storageIssue ? `<div class="recovery-note" role="alert">${e(storageIssue)} <a href="#parent">فتح لوحة وليّ الأمر</a></div>` : ""}
-  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><div class="hero-actions"><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><button class="hero-challenge" data-action="quick-challenge" ${availableMissions().length < 3 ? "disabled" : ""}>⚡ تحدّي البطل السريع <small>٣ مواقف</small></button></div><div class="hero-details"><span>✓ دون مؤقّت</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
+  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><div class="hero-actions"><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><button class="hero-challenge" data-action="quick-challenge" ${availableMissions().length < 5 ? "disabled" : ""}>⚡ لعبة البطل السريع <small>٥ مواقف</small></button></div><div class="hero-details"><span>✓ مؤثرات لعب مرحة</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
   ${statistics()}<section class="mission-section"><div class="section-heading"><div><span class="eyebrow">رحلتك إلى عالم أكثر أمانًا</span><h2>مهمات صغيرة، بطولة كبيرة</h2></div><a href="#missions" class="text-link">كل المهمات ${icon("arrow", 17)}</a></div>${missionGrid(availableMissions().slice(0, 6))}</section>
   <section class="parent-invitation"><span class="invitation-icon">${icon("lock", 27)}</span><div><h3>مهمات من تأليف أبي وأمي</h3><p>كل طفل مختلف. اكتب مواقف تناسب طفلك، وشاركْه رحلة التعلّم.</p></div><a href="#parent" class="secondary">افتح لوحة وليّ الأمر ${icon("arrow", 17)}</a></section>`;
+}
+function renderFestival() {
+  const link = "https://warithh.github.io/digital-rescuer/";
+  return `${heading("نادي أبدع للبرمجة · 1001 مبرمج صغير", "أهلًا بكم في عالم المنقذ الرقمي", "جرّبوا اللعبة هنا، أو خذوا المغامرة معكم إلى الهاتف.")}
+  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="quick-challenge">⚡ ابدأ لعبة البطل</button><a class="secondary" href="#missions">استكشف جميع المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 18 موقفًا متدرجًا</li><li>🏆 نقاط وشارات وشهادة</li><li>👨‍👩‍👦 لوحة تحكم لوليّ الأمر</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>جرّب على الحاسوب</h3><p>اضغط «ابدأ لعبة البطل» وأجب عن خمسة مواقف.</p></div></article><article><span>٢</span><div><h3>امسح رمز QR</h3><p>افتح كاميرا الهاتف ووجّهها نحو الرمز لتنتقل للنسخة المحمولة.</p></div></article><article><span>٣</span><div><h3>كن بطلًا واعيًا</h3><p>اختر التصرف الآمن، واجمع النجوم، وتعلّم من كل إجابة.</p></div></article></section>`;
 }
 function missionGrid(missions) {
   if (!missions.length)
@@ -214,7 +256,8 @@ function renderMissions() {
 function renderAwards() {
   const complete = completedMissions().length,
     total = availableMissions().length,
-    percent = total ? Math.round((complete / total) * 100) : 0;
+    percent = total ? Math.round((complete / total) * 100) : 0,
+    certificateName = e(data.childName || "مرتضى مصطفى العوادي");
   return `${heading("كل خطوة تستحقّ أن تحتفل بها", "خزانة إنجازاتك ✨", "مع كل مهمة تُكملها، تضيف معرفة وشارة جديدة إلى رحلتك.")}
   <section class="achievement-banner"><div class="progress-ring" style="--progress:${percent}%"><span>${number(percent)}<small>٪ من الرحلة</small></span></div><div><span class="eyebrow">تقدّمك محفوظ على هذا الجهاز</span><h2>${total > 0 && complete === total ? "أحسنت، أنت منقذ رقمي!" : "كل اختيار آمن يجعلك أقوى"}</h2><p>أنجزت ${number(complete)} من ${number(total)} مهمات، وجمعت ${number(totalPoints(data))} نقطة.</p></div><span class="award-art">🏆</span></section>
   <div class="badge-grid">${availableMissions()
@@ -224,7 +267,7 @@ function renderAwards() {
     )
     .join(
       "",
-    )}</div>${total > 0 && complete === total ? `<section class="certificate-card"><span class="certificate-spark">✦</span><div><span class="eyebrow">إنجاز يستحق الاحتفال</span><h2>شهادة البطل الرقمي جاهزة</h2><p>أكملت جميع مهمات السلامة. اطبع شهادتك واحتفل بإنجازك!</p></div><button class="primary" data-action="print-certificate">${icon("award", 18)} اطبع الشهادة</button></section><section id="print-certificate" class="print-certificate" aria-label="شهادة البطل الرقمي"><div class="certificate-emblem">🏆</div><p>شهادة تقدير</p><h1>بطل المنقذ الرقمي</h1><strong>${e(data.childName || "بطل السلامة")}</strong><span>أكمل مهمات السلامة واتخذ اختيارات آمنة بوعي وشجاعة.</span><footer>برمجة وتطوير: مرتضى مصطفى العوادي<br>نادي أبدع للبرمجة · 1001 مبرمج صغير</footer></section>` : ""}<p class="hint">يمكن لوليّ الأمر إعادة التقدّم من لوحته عند بدء رحلة جديدة.</p>`;
+    )}</div>${total > 0 && complete === total ? `<section class="certificate-card"><span class="certificate-spark">✦</span><div><span class="eyebrow">إنجاز يستحق الاحتفال</span><h2>شهادة البطل الرقمي جاهزة</h2><p>أكملت جميع مهمات السلامة. اطبع شهادتك واحتفل بإنجازك!</p></div><button class="primary" data-action="print-certificate">${icon("award", 18)} اطبع الشهادة</button></section><section id="print-certificate" class="print-certificate" aria-label="شهادة البطل الرقمي"><div class="certificate-top"><span>🏆</span><b>المنقذ الرقمي</b><span>✦</span></div><p class="certificate-title">شهادة تقدير وبطولة</p><h1>بطل السلامة الرقمي</h1><p class="certificate-given">تُمنح بكل فخر إلى</p><strong>${certificateName}</strong><span class="certificate-text">لإكماله رحلة السلامة الرقمية، وإظهاره وعيًا وشجاعة في اختيار التصرف الآمن.</span><div class="certificate-seal">🛡️<small>اختيار آمن<br>كل يوم</small></div><footer><b>برمجة وتطوير: مرتضى مصطفى العوادي</b><br>نادي أبدع للبرمجة · 1001 مبرمج صغير</footer></section>` : ""}<p class="hint">يمكن لوليّ الأمر إعادة التقدّم من لوحته عند بدء رحلة جديدة.</p>`;
 }
 function renderAbout() {
   return `${heading("البرمجة تصنع فرقًا", "فكرة صغيرة، أثر كبير", "تعرّف إلى هوية المشروع والهدف منه وكيف بُني.")}
@@ -271,7 +314,7 @@ function openQuickChallenge() {
   // نختار ثلاث مهمات مختلفة كي يبقى العرض قصيرًا ومتنوعًا.
   const ids = [...missions]
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
+    .slice(0, 5)
     .map((mission) => mission.id);
   quiz = {
     id: ids[0],
@@ -392,12 +435,13 @@ document.addEventListener("click", async (event) => {
     window.speechSynthesis?.cancel();
     render();
     if (soundOn) {
+      playSound("start");
       if (!("speechSynthesis" in window))
-        notify("هذا المتصفح لا يدعم القراءة الصوتية.", true);
+        notify("فُعّلت مؤثرات اللعبة. هذا المتصفح لا يدعم القراءة الصوتية.", true);
       else {
         speak("أهلًا يا بطل السلامة");
         notify(
-          "فُعّلت القراءة. الصوت العربي يعتمد على الأصوات المثبتة في الجهاز.",
+          "فُعّلت مؤثرات اللعبة والقراءة الصوتية. جرّب فتح مهمة الآن.",
         );
       }
     }
@@ -419,6 +463,7 @@ document.addEventListener("click", async (event) => {
     quiz.answer = Number(button.dataset.choice);
     const result = answerMission(data, quiz.id, quiz.answer, quiz.practice);
     data = result.data;
+    playSound(result.correct ? "success" : "retry");
     if (quiz.challenge && result.correct && quiz.firstTry) quiz.score += 1;
     if (quiz.challenge && !result.correct) quiz.firstTry = false;
     if (!quiz.practice) save();

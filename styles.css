@@ -336,6 +336,122 @@ main {
   gap: 15px;
   color: #fff;
 }
+.festival-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(270px, 0.65fr);
+  gap: 28px;
+  align-items: center;
+  overflow: hidden;
+  padding: 38px;
+  border: 1px solid #d9e8cd;
+  border-radius: 25px;
+  background: linear-gradient(130deg, #e8f4db, #fbf9e9 62%, #e6f3ec);
+}
+.festival-ribbon {
+  display: inline-flex;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #f0c85c;
+  color: #695016;
+  font-size: 11px;
+  font-weight: 700;
+}
+.festival-copy h2 {
+  margin: 14px 0 12px;
+  color: #476d49;
+  font-size: 42px;
+  line-height: 1.35;
+}
+.festival-copy h2 span {
+  color: #d19e33;
+}
+.festival-copy > p {
+  max-width: 570px;
+  color: #637760;
+  font-size: 15px;
+  line-height: 2;
+}
+.festival-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.festival-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 0;
+  margin: 24px 0 0;
+  list-style: none;
+  color: #5f7f57;
+  font-size: 12px;
+  font-weight: 700;
+}
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 19px;
+  border: 1px solid #dfebd1;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 15px 35px #40633c12;
+  text-align: center;
+}
+.qr-card img {
+  width: min(100%, 220px);
+  height: auto;
+  margin: 10px 0 8px;
+  border-radius: 10px;
+}
+.qr-label,
+.qr-card small {
+  color: #83917b;
+  font-size: 10px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.qr-card strong {
+  color: #4b754d;
+  font-size: 15px;
+}
+.festival-how {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 22px;
+}
+.festival-how article {
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #e2ead9;
+  border-radius: 16px;
+  background: #fff;
+}
+.festival-how article > span {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  flex: 0 0 33px;
+  border-radius: 10px;
+  background: #eff6e5;
+  color: #648253;
+  font-size: 15px;
+  font-weight: 700;
+}
+.festival-how h3 {
+  color: #55754f;
+  font-size: 15px;
+}
+.festival-how p {
+  margin-top: 4px;
+  color: #899887;
+  font-size: 11px;
+  line-height: 1.9;
+}
 .hero::after {
   content: "";
   position: absolute;
@@ -1677,6 +1793,42 @@ input[type="radio"] {
     min-height: 385px;
     padding: 37px 46px;
   }
+  .festival-stage {
+    grid-template-columns: 1fr;
+    padding: 24px 18px;
+    gap: 20px;
+    border-radius: 20px;
+  }
+  .festival-copy h2 {
+    font-size: 31px;
+  }
+  .festival-copy > p {
+    font-size: 12px;
+  }
+  .festival-actions > * {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
+  .festival-points {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    font-size: 10px;
+  }
+  .qr-card {
+    padding: 16px;
+  }
+  .qr-card img {
+    width: min(100%, 205px);
+  }
+  .festival-how {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .festival-how article {
+    padding: 14px;
+  }
   .hero h2 {
     font-size: 57px;
   }
@@ -2675,56 +2827,101 @@ input[type="radio"] {
   margin-top: 23px;
 }
 @media print {
-  body * {
-    visibility: hidden !important;
+  @page {
+    size: A4 portrait;
+    margin: 0;
   }
-  #print-certificate,
-  #print-certificate * {
-    visibility: visible !important;
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .sidebar,
+  .topbar,
+  .site-footer,
+  #main > *:not(#print-certificate) {
+    display: none !important;
+  }
+  .workspace,
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
   }
   #print-certificate {
     display: flex !important;
-    position: fixed;
-    inset: 0;
+    width: 210mm;
+    height: 297mm;
     box-sizing: border-box;
-    min-height: 100vh;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    border: 18px solid #d6b85b;
-    outline: 7px solid #f2e4a5;
-    outline-offset: -31px;
-    background: #fffdf5;
+    border: 10mm solid #d6b85b;
+    outline: 3mm solid #f2e4a5;
+    outline-offset: -14mm;
+    background: radial-gradient(circle at 50% 18%, #fff9de, #fffdf5 55%);
     color: #567142;
-    padding: 44px;
+    padding: 24mm 26mm;
+    page-break-after: avoid;
   }
-  .print-certificate .certificate-emblem {
-    font-size: 76px;
-  }
-  .print-certificate > p {
+  .certificate-top {
+    display: flex;
+    align-items: center;
+    gap: 17mm;
     color: #a88636;
-    font-size: 23px;
-    margin: 16px 0 3px;
+    font-size: 27pt;
+  }
+  .certificate-top b {
+    color: #587642;
+    font-size: 24pt;
+  }
+  .print-certificate .certificate-title {
+    color: #a88636;
+    font-size: 18pt;
+    margin: 15mm 0 3mm;
   }
   .print-certificate h1 {
     margin: 0;
-    font-size: 44px;
+    font-size: 33pt;
   }
   .print-certificate strong {
-    margin: 25px 0 12px;
+    margin: 12mm 0 5mm;
     color: #aa8c39;
-    font-size: 32px;
+    font-size: 28pt;
   }
-  .print-certificate > span {
-    font-size: 18px;
-    max-width: 550px;
+  .print-certificate .certificate-given {
+    margin: 9mm 0 0;
+    color: #7d8d70;
+    font-size: 14pt;
+  }
+  .print-certificate .certificate-text {
+    font-size: 15pt;
+    max-width: 145mm;
     line-height: 2;
   }
+  .certificate-seal {
+    display: grid;
+    place-items: center;
+    width: 31mm;
+    height: 31mm;
+    margin-top: 12mm;
+    border-radius: 50%;
+    border: 2mm solid #e4c968;
+    background: #fff5bd;
+    color: #887331;
+    font-size: 24pt;
+  }
+  .certificate-seal small {
+    font-size: 7pt;
+    line-height: 1.5;
+  }
   .print-certificate footer {
-    margin-top: 45px;
+    margin-top: 10mm;
     color: #7d8d70;
-    font-size: 15px;
+    font-size: 11pt;
     line-height: 2;
   }
 }

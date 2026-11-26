@@ -58,10 +58,14 @@ for (const filename of ["missions.js", "state.js", "app.js"]) {
     .replace(/^export /gm, "");
   javascript += code + "\n";
 }
-for (const filename of ["assets/hero.svg", "assets/icon.svg"]) {
+for (const filename of [
+  "assets/hero.svg",
+  "assets/icon.svg",
+  "assets/festival-qr.png",
+]) {
+  const mime = filename.endsWith(".png") ? "image/png" : "image/svg+xml";
   const uri =
-    "data:image/svg+xml;base64," +
-    (await fs.readFile(filename)).toString("base64");
+    `data:${mime};base64,` + (await fs.readFile(filename)).toString("base64");
   html = html.replaceAll(filename, uri);
   javascript = javascript.replaceAll(filename, uri);
 }
