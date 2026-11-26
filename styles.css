@@ -2892,51 +2892,6 @@ input[type="radio"] {
     scroll-margin-top: 17px;
   }
 }
-.challenge-progress {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 14px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f6f1d8;
-  color: #a38029;
-  font-size: 11px;
-  font-weight: 700;
-}
-.challenge-result {
-  text-align: center;
-  padding: 18px 5px 4px;
-  outline: none;
-}
-.challenge-trophy {
-  display: grid;
-  place-items: center;
-  width: 92px;
-  height: 92px;
-  margin: 0 auto 16px;
-  border-radius: 28px;
-  background: #fff7d8;
-  font-size: 47px;
-}
-.challenge-result h2 {
-  color: #557a46;
-  font-size: 27px;
-  margin: 7px 0 10px;
-}
-.challenge-result p {
-  max-width: 440px;
-  margin: auto;
-  color: #71806b;
-  font-size: 14px;
-  line-height: 2;
-}
-.challenge-result-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 23px;
-}
 @media print {
   @page {
     size: A4 portrait;
@@ -3159,29 +3114,6 @@ input[type="radio"] {
     justify-content: center;
     font-size: 11px;
   }
-  .challenge-progress {
-    margin-bottom: 10px;
-    font-size: 10px;
-  }
-  .challenge-trophy {
-    width: 78px;
-    height: 78px;
-    border-radius: 23px;
-    font-size: 39px;
-  }
-  .challenge-result h2 {
-    font-size: 22px;
-  }
-  .challenge-result p {
-    font-size: 12px;
-  }
-  .challenge-result-actions {
-    flex-direction: column;
-  }
-  .challenge-result-actions button {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 @media (max-width: 950px) {
@@ -3307,5 +3239,78 @@ input[type="radio"] {
   .nav-link {
     min-height: 38px;
     padding-block: 7px;
+  }
+}
+
+/* أسئلة الأبوين للعبة. */
+.game-question-form {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 14px 16px;
+  margin-top: 16px;
+}
+.game-question-form .wide,
+.game-question-form .form-error,
+.game-question-form > .primary {
+  grid-column: 1 / -1;
+}
+.game-question-form > .primary {
+  justify-self: start;
+}
+.game-question-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+.game-question-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfdf8;
+}
+.game-question-item > div {
+  flex: 1;
+  min-width: 0;
+}
+.game-question-item h3 {
+  color: #50744e;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.game-question-item p {
+  margin-top: 4px;
+  color: #899887;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.game-question-item b {
+  color: #4b844b;
+}
+.level-chip {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #eef6e5;
+  color: #5c895b;
+  font-size: 11px;
+  font-weight: 700;
+}
+.parent-badge {
+  color: #b0812a;
+  font-weight: 700;
+}
+@media (max-width: 650px) {
+  .game-question-form {
+    grid-template-columns: 1fr;
+  }
+  .game-question-form > .primary {
+    justify-self: stretch;
+    justify-content: center;
+  }
+  .game-question-item {
+    flex-wrap: wrap;
   }
 }

@@ -9,6 +9,7 @@ import {
   resetMission,
   storageKey,
   makePin,
+  validateGameQuestions,
 } from "../state.js";
 
 test("first correct answer earns points once; wrong answers are recorded without deductions", () => {
@@ -98,4 +99,18 @@ test("reserved object keys cannot be imported as mission IDs", () => {
     data.missions[0].id = id;
     assert.throws(() => validateData(data));
   }
+});
+
+test("parent game questions are validated, kept in backups, and old files still load", () => {
+  const data = newData();
+  assert.deepEqual(data.gameQuestions, []);
+  const { gameQuestions, ...oldFile } = data;
+  assert.deepEqual(validateData(oldFile).gameQuestions, []);
+  const question = { id: "game-a1", level: 2, prompt: " كم يومًا في الأسبوع؟ ", answers: ["٧", "٥", "٦"], correct: 0 };
+  const saved = validateData(JSON.parse(JSON.stringify({ ...data, gameQuestions: [question] })));
+  assert.equal(saved.gameQuestions[0].prompt, "كم يومًا في الأسبوع؟");
+  assert.equal(saved.gameQuestions[0].level, 2);
+  assert.throws(() => validateGameQuestions([{ ...question, answers: ["٧", "٧", "٦"] }]));
+  assert.throws(() => validateGameQuestions([{ ...question, level: 4 }]));
+  assert.throws(() => validateGameQuestions([question, question]));
 });

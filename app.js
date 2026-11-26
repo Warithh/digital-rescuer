@@ -10,6 +10,7 @@ import {
   resetMission,
   makePin,
   makeSalt,
+  validateGameQuestions,
 } from "./state.js";
 
 // ١. نقرأ البيانات ونحفظ حالة الشاشة التي يشاهدها المستخدم.
@@ -32,6 +33,7 @@ let parentUnlocked = false;
 let draft = null;
 let quiz = null;
 let wordGame = null;
+let pendingWordGame = false;
 let soundOn = false;
 let voiceWarningShown = false;
 let audioContext;
@@ -243,7 +245,7 @@ function renderHome() {
     availableMissions()[0];
   return `${heading("كل اختيار آمن يصنع بطلًا", data.childName ? `أهلًا بالبطل ${e(data.childName)}! 👋` : "أهلًا يا بطل السلامة! 👋", "مغامرات صغيرة، معرفة كبيرة. لنكتشف الاختيار الأكثر أمانًا معًا.")}
   ${storageIssue ? `<div class="recovery-note" role="alert">${e(storageIssue)} <a href="#parent">فتح لوحة وليّ الأمر</a></div>` : ""}
-  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><div class="hero-actions"><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><button class="hero-challenge" data-action="quick-challenge" ${availableMissions().length < 5 ? "disabled" : ""}>⚡ لعبة البطل السريع <small>٥ مواقف</small></button></div><div class="hero-details"><span>✓ مؤثرات لعب مرحة</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
+  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><div class="hero-actions"><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><button class="hero-challenge" data-action="word-game">🔢 تحدّي الأرقام والكلمات <small>٣ مستويات</small></button></div><div class="hero-details"><span>✓ مؤثرات لعب مرحة</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
   ${statistics()}<section class="mission-section"><div class="section-heading"><div><span class="eyebrow">رحلتك إلى عالم أكثر أمانًا</span><h2>مهمات صغيرة، بطولة كبيرة</h2></div><a href="#missions" class="text-link">كل المهمات ${icon("arrow", 17)}</a></div>${missionGrid(availableMissions().slice(0, 6))}</section>
   <section class="parent-invitation"><span class="invitation-icon">${icon("lock", 27)}</span><div><h3>مهمات من تأليف أبي وأمي</h3><p>كل طفل مختلف. اكتب مواقف تناسب طفلك، وشاركْه رحلة التعلّم.</p></div><a href="#parent" class="secondary">افتح لوحة وليّ الأمر ${icon("arrow", 17)}</a></section>`;
 }
@@ -251,7 +253,7 @@ function renderFestival() {
   if (wordGame) return renderWordGame();
   const link = "https://warithh.github.io/digital-rescuer/";
   return `${heading("نادي أبدع للبرمجة · 1001 مبرمج صغير", "أهلًا بكم في عالم المنقذ الرقمي", "جرّبوا اللعبة هنا، أو خذوا المغامرة معكم إلى الهاتف.")}
-  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="word-game">🔢 تحدّي الأرقام والكلمات</button><button class="secondary" data-action="quick-challenge">⚡ تحدّي المواقف</button><a class="secondary" href="#missions">المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 3 مستويات · 15 سؤالًا</li><li>🔤 أسئلة جديدة كل جولة</li><li>🏆 نجوم وشهادة بطل</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>المستوى الأول: أرقام</h3><p>أكمل التسلسل واجمع النجوم.</p></div></article><article><span>٢</span><div><h3>المستوى الثاني: كلمات</h3><p>أكمل الكلمة العربية الصحيحة.</p></div></article><article><span>٣</span><div><h3>المستوى الثالث: أمان</h3><p>اختر كلمة الأمان المناسبة للموقف.</p></div></article></section>`;
+  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="word-game">🔢 تحدّي الأرقام والكلمات</button><a class="secondary" href="#missions">المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 3 مستويات · 15 سؤالًا</li><li>🔤 أسئلة جديدة كل جولة</li><li>🏆 نجوم وشهادة بطل</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>المستوى الأول: أرقام</h3><p>أكمل التسلسل واجمع النجوم.</p></div></article><article><span>٢</span><div><h3>المستوى الثاني: كلمات</h3><p>أكمل الكلمة العربية الصحيحة.</p></div></article><article><span>٣</span><div><h3>المستوى الثالث: أمان</h3><p>اختر كلمة الأمان المناسبة للموقف.</p></div></article></section>`;
 }
 // لعبة الأرقام والكلمات: ثلاثة مستويات، وكل جولة تختار أسئلة مختلفة.
 const WORD_GAME_PER_LEVEL = 5;
@@ -324,11 +326,21 @@ const safetyWords = [
   { prompt: "قبل الأكل يجب أن…", right: "أغسل يديّ", wrong: ["ألعب بالتراب", "أنام"], hint: "🧼" },
   { prompt: "صديقي سقط وجُرح. ماذا أفعل؟", right: "أنادي شخصًا كبيرًا", wrong: ["أضحك", "أتركه وحده"], hint: "🩹" },
 ];
+// أسئلة الأبوين تظهر أولًا في مستواها، ثم تكمل اللعبة العدد من أسئلتها.
+function parentQuestions(level) {
+  return shuffle(data.gameQuestions.filter((q) => q.level === level))
+    .slice(0, WORD_GAME_PER_LEVEL)
+    .map((q) => ({ ...makeQuestion(q.prompt, q.answers[q.correct], q.answers.filter((_, i) => i !== q.correct), "💌"), fromParent: true }));
+}
+function fillLevel(level, builtIn) {
+  const own = parentQuestions(level);
+  return [...own, ...builtIn.slice(0, WORD_GAME_PER_LEVEL - own.length)];
+}
 function buildWordGameLevels() {
   return [
-    { title: "تحدّي الأرقام", emoji: "🔢", questions: Array.from({ length: WORD_GAME_PER_LEVEL }, numberQuestion) },
-    { title: "أكمل الكلمة", emoji: "🔤", questions: shuffle(gameWords).slice(0, WORD_GAME_PER_LEVEL).map(wordQuestion) },
-    { title: "كلمات الأمان", emoji: "🛡️", questions: shuffle(safetyWords).slice(0, WORD_GAME_PER_LEVEL).map((item) => makeQuestion(item.prompt, item.right, item.wrong, item.hint)) },
+    { title: "تحدّي الأرقام", emoji: "🔢", questions: fillLevel(1, Array.from({ length: WORD_GAME_PER_LEVEL }, numberQuestion)) },
+    { title: "أكمل الكلمة", emoji: "🔤", questions: fillLevel(2, shuffle(gameWords).map(wordQuestion)) },
+    { title: "كلمات الأمان", emoji: "🛡️", questions: fillLevel(3, shuffle(safetyWords).map((item) => makeQuestion(item.prompt, item.right, item.wrong, item.hint))) },
   ];
 }
 function startWordGame() {
@@ -351,7 +363,7 @@ function renderWordGame() {
   const correct = wordGame.answer === question.correct;
   const lastQuestion = wordGame.index + 1 === level.questions.length;
   const nextLabel = !correct ? "أحاول مجددًا" : !lastQuestion ? "السؤال التالي" : wordGame.level + 1 === wordGame.levels.length ? "شاهد نتيجتك" : "افتح المستوى التالي";
-  return `${heading("تحدّي الأرقام والكلمات", `${level.emoji} المستوى ${number(wordGame.level + 1)}: ${level.title}`, "الإجابة الصحيحة من أول محاولة تعطيك نجمة.")}<section class="word-game">${progress}<div class="word-question"><span>${question.hint || level.emoji}</span><h2>${e(question.prompt)}</h2><small>السؤال ${number(wordGame.index + 1)} من ${number(level.questions.length)}</small></div><div class="word-options">${question.answers.map((answer, index) => `<button class="word-option ${answered && correct && index === question.correct ? "correct" : answered && index === wordGame.answer && !correct ? "incorrect" : ""}" data-action="word-answer" data-choice="${index}" ${answered ? "disabled" : ""}>${e(answer)}</button>`).join("")}</div>${answered ? `<div class="word-feedback ${correct ? "good" : "try"}" role="status"><strong>${correct ? (wordGame.tries === 1 ? "أحسنت! نجمة جديدة 🌟" : "صحيح! أحسنت المحاولة 👏") : "ليست هذه، فكّر مرة أخرى 🤔"}</strong><button class="primary" data-action="word-next">${nextLabel}</button></div>` : ""}</section>`;
+  return `${heading("تحدّي الأرقام والكلمات", `${level.emoji} المستوى ${number(wordGame.level + 1)}: ${level.title}`, "الإجابة الصحيحة من أول محاولة تعطيك نجمة.")}<section class="word-game">${progress}<div class="word-question"><span>${question.hint || level.emoji}</span><h2>${e(question.prompt)}</h2><small>${question.fromParent ? '<b class="parent-badge">💌 سؤال من أهلك</b> · ' : ""}السؤال ${number(wordGame.index + 1)} من ${number(level.questions.length)}</small></div><div class="word-options">${question.answers.map((answer, index) => `<button class="word-option ${answered && correct && index === question.correct ? "correct" : answered && index === wordGame.answer && !correct ? "incorrect" : ""}" data-action="word-answer" data-choice="${index}" ${answered ? "disabled" : ""}>${e(answer)}</button>`).join("")}</div>${answered ? `<div class="word-feedback ${correct ? "good" : "try"}" role="status"><strong>${correct ? (wordGame.tries === 1 ? "أحسنت! نجمة جديدة 🌟" : "صحيح! أحسنت المحاولة 👏") : "ليست هذه، فكّر مرة أخرى 🤔"}</strong><button class="primary" data-action="word-next">${nextLabel}</button></div>` : ""}</section>`;
 }
 function missionGrid(missions) {
   if (!missions.length)
@@ -398,7 +410,15 @@ function renderParent() {
   <section class="panel"><div class="section-heading"><div><span class="eyebrow">رحلة تحمل اسمه</span><h2>إعدادات طفلك</h2></div></div><form id="settings-form" class="settings-form"><div class="form-field"><label for="child-name">اسم الطفل</label><input id="child-name" name="childName" maxlength="40" value="${e(data.childName)}" placeholder="اختياري، مثل: علي"></div><label class="checkbox-label"><input name="soundAllowed" type="checkbox" ${data.soundAllowed ? "checked" : ""}> السماح بالقراءة الصوتية</label><button class="primary">حفظ الإعدادات</button></form></section>
   <section class="panel"><div class="section-heading"><div><span class="eyebrow">كل موقف تكتبه قد يصنع فرقًا</span><h2>مكتبة المهمات</h2><p>اكتب، عدّل، أخفِ، ورتّب. جرّب المهمات دون التأثير في نقاط الطفل.</p></div><div class="library-actions"><button class="school-template" data-action="school-template" ${data.missions.length >= 100 ? "disabled" : ""}>🎒 مهمة أمان المدرسة</button><button class="primary" data-action="add" ${data.missions.length >= 100 ? "disabled" : ""}>${icon("plus", 18)} إضافة مهمة</button></div></div><div class="managed-list">${data.missions.map((m, index) => `<article class="managed-mission"><span class="managed-emoji ${e(m.color)}">${e(m.emoji)}</span><div class="managed-info"><h3>${e(m.title)}</h3><p>${e(m.category)} · ${number(m.points)} نقطة · ${data.completed.includes(m.id) ? "مكتملة" : "لم تكتمل"}</p><small>إجابات صحيحة: ${number(data.attempts[m.id]?.correct || 0)} · محاولات تحتاج مراجعة: ${number(data.attempts[m.id]?.wrong || 0)}</small></div><div class="manage-buttons"><button class="visibility-button ${m.enabled ? "visible" : ""}" data-action="visibility" data-id="${e(m.id)}" aria-pressed="${m.enabled}">${m.enabled ? "✓ ظاهرة" : "مخفية"}</button><button class="small-button" data-action="move-up" data-id="${e(m.id)}" aria-label="تقديم ${e(m.title)}" ${index === 0 ? "disabled" : ""}>↑</button><button class="small-button" data-action="move-down" data-id="${e(m.id)}" aria-label="تأخير ${e(m.title)}" ${index === data.missions.length - 1 ? "disabled" : ""}>↓</button><button class="small-button" data-action="practice" data-id="${e(m.id)}" aria-label="تجربة ${e(m.title)}">تجربة</button><button class="small-button" data-action="edit" data-id="${e(m.id)}" aria-label="تعديل ${e(m.title)}">تعديل</button><button class="small-button danger" data-action="delete" data-id="${e(m.id)}" aria-label="حذف ${e(m.title)}">حذف</button></div></article>`).join("") || '<p class="empty-state">أضف أول مهمة لطفلك.</p>'}</div></section>
   ${draft ? renderEditor() : ""}
+  ${renderGameQuestions()}
   <div class="parent-tools"><section class="panel"><h2>التقدّم والنسخ الاحتياطي</h2><p>انقل مهمات طفلك وتقدّمه إلى جهاز آخر بنسخة احتياطية. رمز اللوحة لا يُصدَّر.</p><div class="tool-buttons"><button class="secondary" data-action="export">↓ تنزيل نسخة احتياطية</button><label class="secondary file-button">↑ استعادة نسخة<input type="file" id="backup-file" accept=".json,application/json" aria-label="ملف النسخة الاحتياطية"></label><button class="secondary danger" data-action="reset-progress">إعادة تقدّم الطفل</button><button class="secondary danger" data-action="reset-missions">استعادة المهمات الأصلية</button></div><p class="hint">إخفاء المهمة لا يحذف نقاطها المكتسبة. تعديل سؤال أو إجابات مهمة يعيد تقدّمها وحدها بعد التأكيد.</p></section><section class="panel"><h2>تغيير رمز وليّ الأمر</h2><form id="change-pin-form"><label for="new-pin">الرمز الجديد</label><input id="new-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="new-password"><label for="new-repeat">تأكيد الرمز الجديد</label><input id="new-repeat" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password"><button class="secondary">حفظ الرمز الجديد</button><p class="form-error" role="alert" hidden></p></form></section></div>`;
+}
+function renderGameQuestions() {
+  const levels = ["١: الأرقام", "٢: الكلمات", "٣: الأمان"];
+  const list = data.gameQuestions
+    .map((q) => `<article class="game-question-item"><span class="level-chip">م${number(q.level)}</span><div><h3>${e(q.prompt)}</h3><p>${q.answers.map((a, i) => (i === q.correct ? `<b>✓ ${e(a)}</b>` : e(a))).join(" · ")}</p></div><button class="small-button danger" data-action="delete-game-question" data-id="${e(q.id)}" aria-label="حذف السؤال ${e(q.prompt)}">حذف</button></article>`)
+    .join("");
+  return `<section class="panel game-questions"><div class="section-heading"><div><span class="eyebrow">لعبة الأرقام والكلمات</span><h2>أسئلة من تأليفك للعبة</h2><p>أسئلتك تظهر أولًا في المستوى الذي تختاره، وتكمل اللعبة الباقي من أسئلتها. حتى ٥ أسئلة لكل جولة في كل مستوى.</p></div></div><form id="game-question-form" class="game-question-form"><div class="form-field"><label for="gq-level">المستوى</label><select id="gq-level" name="level">${levels.map((name, i) => `<option value="${i + 1}">المستوى ${name}</option>`).join("")}</select></div><div class="form-field wide"><label for="gq-prompt">السؤال</label><input id="gq-prompt" name="prompt" maxlength="200" required placeholder="مثال: كم عدد أصابع اليد الواحدة؟"></div><fieldset class="wide answer-editor"><legend>ثلاث إجابات — اختر دائرة الإجابة الصحيحة</legend>${[0, 1, 2].map((i) => `<div><label class="correct-choice"><input type="radio" name="correct" value="${i}" ${i === 0 ? "checked" : ""} required> الصحيحة</label><input name="answer${i}" maxlength="60" required aria-label="الإجابة ${number(i + 1)}" placeholder="الإجابة ${number(i + 1)}"></div>`).join("")}</fieldset><p class="form-error" role="alert" hidden></p><button class="primary" ${data.gameQuestions.length >= 60 ? "disabled" : ""}>${icon("plus", 18)} إضافة السؤال للعبة</button></form><div class="game-question-list">${list || '<p class="empty-state">لا توجد أسئلة منك بعد. أضف أول سؤال لطفلك.</p>'}</div></section>`;
 }
 function renderEditor() {
   return `<section class="panel mission-editor"><div class="section-heading"><div><span class="eyebrow">فكرتك تصبح مغامرة</span><h2 id="editor-title" tabindex="-1">${data.missions.some((m) => m.id === draft.id) ? "تعديل المهمة" : "مهمة جديدة من تأليفك"}</h2></div><button class="icon-button" data-action="cancel-edit" aria-label="إغلاق محرّر المهمة">${icon("close", 20)}</button></div><form id="mission-form"><div class="editor-grid"><div class="form-field"><label for="mission-title">عنوان المهمة</label><input id="mission-title" name="title" maxlength="80" required value="${e(draft.title)}"></div><div class="form-field"><label for="mission-category">التصنيف</label><input id="mission-category" name="category" maxlength="60" list="categories" required value="${e(draft.category)}"><datalist id="categories">${[...new Set(data.missions.map((m) => m.category))].map((c) => `<option value="${e(c)}">`).join("")}</datalist></div><div class="form-field"><label for="mission-level">درجة الصعوبة</label><select id="mission-level" name="level"><option value="1" ${draft.level === 1 ? "selected" : ""}>المستوى ١: بداية آمنة</option><option value="2" ${draft.level === 2 ? "selected" : ""}>المستوى ٢: مستكشف واعٍ</option><option value="3" ${draft.level === 3 ? "selected" : ""}>المستوى ٣: بطل ذكي</option></select></div><div class="form-field"><label for="mission-brief">وصف مختصر</label><input id="mission-brief" name="brief" maxlength="140" required value="${e(draft.brief)}"></div><div class="form-field"><label for="mission-points">نقاط المهمة</label><input id="mission-points" name="points" type="number" min="0" max="1000" step="1" required value="${draft.points}"></div><div class="form-field"><label for="mission-emoji">رمز المهمة</label><select id="mission-emoji" name="emoji">${[...new Set([draft.emoji, "🌟", "🔥", "⚡", "🚦", "🧭", "🔐", "💊", "🏠", "💧", "🎒", "🤝", "🛡️"])].map((emoji) => `<option ${draft.emoji === emoji ? "selected" : ""}>${e(emoji)}</option>`).join("")}</select></div><div class="form-field"><label for="mission-color">لون البطاقة</label><select id="mission-color" name="color">${colors.map((c, i) => `<option value="${c}" ${draft.color === c ? "selected" : ""}>${["برتقالي", "ذهبي", "أزرق", "بنفسجي", "أخضر", "وردي"][i]}</option>`).join("")}</select></div><div class="form-field wide"><label for="mission-question">الموقف أو السؤال</label><textarea id="mission-question" name="question" rows="3" maxlength="1000" required>${e(draft.question)}</textarea></div><fieldset class="wide answer-editor"><legend>الخيارات — اختر دائرة الإجابة الصحيحة</legend>${draft.answers.map((text, i) => `<div><label class="correct-choice"><input type="radio" name="correct" value="${i}" ${draft.correct === i ? "checked" : ""} required> الصحيح ${number(i + 1)}</label><input name="answer${i}" maxlength="500" required aria-label="الخيار ${i + 1}" value="${e(text)}"></div>`).join("")}</fieldset><div class="form-field wide"><label for="mission-why">شرح التصرف الآمن</label><textarea id="mission-why" name="why" rows="3" maxlength="2000" required>${e(draft.why)}</textarea></div><div class="form-field wide"><label for="mission-tip">نصيحة يتذكّرها الطفل</label><input id="mission-tip" name="tip" maxlength="300" required value="${e(draft.tip)}"></div><label class="checkbox-label wide"><input type="checkbox" name="enabled" ${draft.enabled ? "checked" : ""}> إظهار المهمة للطفل بعد حفظها</label></div><p class="hint">تغيير السؤال أو إجاباته يعيد تقدّم هذه المهمة. تغيير نقاطها يؤثر في الإنجازات القادمة فقط.</p><p class="form-error" role="alert" hidden></p><div class="button-row"><button class="primary">حفظ المهمة ${icon("check", 18)}</button><button type="button" class="secondary" data-action="cancel-edit">إلغاء التعديل</button></div></form></section>`;
@@ -416,46 +436,11 @@ function openQuiz(id, practice = false) {
   renderQuiz();
   speak(mission.question);
 }
-function openQuickChallenge() {
-  const missions = availableMissions();
-  if (missions.length < 3) {
-    notify("أضف أو أظهر ثلاث مهمات على الأقل لبدء التحدّي.", true);
-    return;
-  }
-  // نختار ثلاث مهمات مختلفة كي يبقى العرض قصيرًا ومتنوعًا.
-  const ids = [...missions]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 5)
-    .map((mission) => mission.id);
-  quiz = {
-    id: ids[0],
-    practice: false,
-    answer: null,
-    challenge: true,
-    ids,
-    index: 0,
-    score: 0,
-    firstTry: true,
-    finished: false,
-  };
-  renderQuiz();
-  speak(data.missions.find((mission) => mission.id === quiz.id).question);
-}
 function renderQuiz() {
-  if (quiz.finished) {
-    quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق التحدّي">${icon("close", 22)}</button><section class="challenge-result" tabindex="-1"><span class="challenge-trophy">🏆</span><span class="eyebrow">اكتمل تحدّي البطل السريع</span><h2>أحسنت يا ${e(data.childName || "بطل السلامة")}!</h2><p>أجبت من أول محاولة عن <strong>${number(quiz.score)} من ${number(quiz.ids.length)}</strong> مواقف. تذكّر: التفكير الهادئ وطلب مساعدة شخص بالغ هما قوة البطل الحقيقي.</p><div class="challenge-result-actions"><button class="primary" data-action="challenge-again">أعد التحدّي ${icon("arrow", 18)}</button><button class="secondary" data-action="close-quiz">إنهاء</button></div></section>`;
-    if (!quizDialog.open) {
-      quizDialog.showModal();
-      document.body.classList.add("dialog-open");
-    }
-    quizDialog.querySelector(".challenge-result").focus();
-    return;
-  }
   const m = data.missions.find((m) => m.id === quiz.id),
     answered = quiz.answer !== null,
     correct = quiz.answer === m.correct;
-  const challengeProgress = quiz.challenge ? `<span class="challenge-progress">⚡ تحدّي البطل ${number(quiz.index + 1)} / ${number(quiz.ids.length)}</span>` : "";
-  quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق المهمة">${icon("close", 22)}</button>${challengeProgress}<div class="quiz-intro"><span class="quiz-emoji ${e(m.color)}">${e(m.emoji)}</span><span class="eyebrow">${quiz.challenge ? "أجب بأمان وواصل البطولة" : quiz.practice ? "معاينة وليّ الأمر · دون نقاط" : e(m.category)}</span><h2 id="quiz-title">${e(m.title)}</h2><p>${e(m.question)}</p></div><div class="answer-options">${m.answers.map((answer, index) => `<button data-action="answer" data-choice="${index}" class="answer ${answered && index === m.correct ? "correct" : answered && index === quiz.answer ? "incorrect" : ""}" ${answered ? "disabled" : ""}><span>${["أ", "ب", "ج"][index]}</span><b>${e(answer)}</b>${answered && index === m.correct ? icon("check", 23) : ""}</button>`).join("")}</div>${answered ? `<section class="feedback ${correct ? "success" : "learn"}" tabindex="-1" role="status"><h3>${correct ? "اختيار رائع يا بطل! 🌟" : "لا بأس.. نتعلّم معًا 💛"}</h3><p>${e(m.why)}</p><div class="takeaway">💡 ${e(m.tip)}</div><div class="feedback-bottom"><small>${quiz.challenge ? correct ? "موقف آمن آخر بانتظارك." : "تعلّم من النصيحة ثم حاول مجددًا." : quiz.practice ? "تجربة فقط؛ لن يتغيّر تقدّم الطفل." : correct ? "أنت تتعلّم وتحمي نفسك. المهمة تُحتسب مرة واحدة." : "جرّب مجددًا، دون خسارة نقاط."}</small><button class="primary" data-action="quiz-next">${!correct ? "أحاول مجددًا" : quiz.challenge ? quiz.index + 1 === quiz.ids.length ? "شاهد نتيجتك" : "الموقف التالي" : quiz.practice ? "العودة إلى اللوحة" : availableMissions().some((item) => !data.completed.includes(item.id)) ? "المهمة التالية" : "شاهد إنجازاتك"} ${icon("arrow", 18)}</button></div></section>` : '<p class="quiz-hint">خذ وقتك. لا يوجد مؤقّت.. فكّر ثم اختر.</p>'}`;
+  quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق المهمة">${icon("close", 22)}</button><div class="quiz-intro"><span class="quiz-emoji ${e(m.color)}">${e(m.emoji)}</span><span class="eyebrow">${quiz.practice ? "معاينة وليّ الأمر · دون نقاط" : e(m.category)}</span><h2 id="quiz-title">${e(m.title)}</h2><p>${e(m.question)}</p></div><div class="answer-options">${m.answers.map((answer, index) => `<button data-action="answer" data-choice="${index}" class="answer ${answered && index === m.correct ? "correct" : answered && index === quiz.answer ? "incorrect" : ""}" ${answered ? "disabled" : ""}><span>${["أ", "ب", "ج"][index]}</span><b>${e(answer)}</b>${answered && index === m.correct ? icon("check", 23) : ""}</button>`).join("")}</div>${answered ? `<section class="feedback ${correct ? "success" : "learn"}" tabindex="-1" role="status"><h3>${correct ? "اختيار رائع يا بطل! 🌟" : "لا بأس.. نتعلّم معًا 💛"}</h3><p>${e(m.why)}</p><div class="takeaway">💡 ${e(m.tip)}</div><div class="feedback-bottom"><small>${quiz.practice ? "تجربة فقط؛ لن يتغيّر تقدّم الطفل." : correct ? "أنت تتعلّم وتحمي نفسك. المهمة تُحتسب مرة واحدة." : "جرّب مجددًا، دون خسارة نقاط."}</small><button class="primary" data-action="quiz-next">${!correct ? "أحاول مجددًا" : quiz.practice ? "العودة إلى اللوحة" : availableMissions().some((item) => !data.completed.includes(item.id)) ? "المهمة التالية" : "شاهد إنجازاتك"} ${icon("arrow", 18)}</button></div></section>` : '<p class="quiz-hint">خذ وقتك. لا يوجد مؤقّت.. فكّر ثم اختر.</p>'}`;
   if (!quizDialog.open) {
     quizDialog.showModal();
     document.body.classList.add("dialog-open");
@@ -538,6 +523,7 @@ document.addEventListener("click", async (event) => {
     "reset-missions",
     "fresh-start",
     "school-template",
+    "delete-game-question",
   ];
   if (parentActions.includes(action) && !parentUnlocked) return;
   if (action === "sound") {
@@ -563,8 +549,13 @@ document.addEventListener("click", async (event) => {
       availableMissions()[0];
     if (m) openQuiz(m.id);
   }
-  if (action === "quick-challenge") openQuickChallenge();
-  if (action === "word-game") startWordGame();
+  if (action === "word-game") {
+    if (currentScreen !== "festival") {
+      wordGame = null;
+      pendingWordGame = true;
+      location.hash = "#festival";
+    } else startWordGame();
+  }
   if (action === "word-restart") startWordGame();
   if (action === "word-exit") {
     wordGame = null;
@@ -611,8 +602,6 @@ document.addEventListener("click", async (event) => {
     const result = answerMission(data, quiz.id, quiz.answer, quiz.practice);
     data = result.data;
     playSound(result.correct ? "success" : "retry");
-    if (quiz.challenge && result.correct && quiz.firstTry) quiz.score += 1;
-    if (quiz.challenge && !result.correct) quiz.firstTry = false;
     if (!quiz.practice) save();
     render();
     renderQuiz();
@@ -623,18 +612,6 @@ document.addEventListener("click", async (event) => {
     if (quiz.answer !== m.correct) {
       quiz.answer = null;
       renderQuiz();
-    } else if (quiz.challenge) {
-      if (quiz.index + 1 < quiz.ids.length) {
-        quiz.index += 1;
-        quiz.id = quiz.ids[quiz.index];
-        quiz.answer = null;
-        quiz.firstTry = true;
-        renderQuiz();
-        speak(data.missions.find((mission) => mission.id === quiz.id).question);
-      } else {
-        quiz.finished = true;
-        renderQuiz();
-      }
     } else if (quiz.practice) closeQuiz();
     else {
       const next = availableMissions().find(
@@ -681,6 +658,13 @@ document.addEventListener("click", async (event) => {
       render();
     }
   }
+  if (action === "delete-game-question" && parentUnlocked)
+    ask("هل تريد حذف هذا السؤال من اللعبة؟", () => {
+      data.gameQuestions = data.gameQuestions.filter((q) => q.id !== id);
+      save();
+      render();
+      notify("حُذف السؤال.");
+    });
   if (action === "delete")
     ask(
       "سيُحذف محتوى هذه المهمة ونقاطها وسجلّ محاولاتها. هل تريد المتابعة؟",
@@ -741,7 +725,6 @@ document.addEventListener("click", async (event) => {
     notify("حُمّلت نسخة المهمات والتقدّم. رمز الدخول لا يُصدَّر.");
   }
   if (action === "print-certificate") window.print();
-  if (action === "challenge-again") openQuickChallenge();
   if (action === "confirm-no") {
     confirmDialog.close();
     confirmation = null;
@@ -777,6 +760,20 @@ document.addEventListener("submit", async (event) => {
       render();
     }
     if (!parentUnlocked) return;
+    if (form.id === "game-question-form") {
+      const question = {
+        id: `game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        level: Number(values.get("level")),
+        prompt: String(values.get("prompt") || ""),
+        answers: [0, 1, 2].map((i) => String(values.get(`answer${i}`) || "")),
+        correct: Number(values.get("correct")),
+      };
+      data.gameQuestions = validateGameQuestions([...data.gameQuestions, question]);
+      save();
+      render();
+      document.querySelector("#gq-level").value = String(question.level);
+      notify("أُضيف السؤال إلى لعبة الأرقام والكلمات.");
+    }
     if (form.id === "settings-form") {
       data.childName = values.get("childName").trim();
       data.soundAllowed = values.has("soundAllowed");
@@ -908,6 +905,12 @@ function navigate() {
   }
   if (next !== "festival") wordGame = null;
   currentScreen = next;
+  if (pendingWordGame && next === "festival") {
+    pendingWordGame = false;
+    startWordGame();
+    return;
+  }
+  pendingWordGame = false;
   render();
   window.scrollTo(0, 0);
 }

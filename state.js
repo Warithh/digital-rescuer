@@ -13,7 +13,46 @@ export function newData() {
     childName: "",
     soundAllowed: true,
     pin: null,
+    gameQuestions: [],
   };
+}
+
+// أسئلة يكتبها الأبوان للعبة الأرقام والكلمات. الملفات القديمة بلا أسئلة تبقى صالحة.
+export function validateGameQuestions(list = []) {
+  if (!Array.isArray(list) || list.length > 60)
+    throw Error("أسئلة اللعبة غير صالحة.");
+  const ids = new Set();
+  return list.map((q) => {
+    if (
+      !q ||
+      typeof q.id !== "string" ||
+      !/^[a-zA-Z0-9-]{1,80}$/.test(q.id) ||
+      ids.has(q.id)
+    )
+      throw Error("معرّف سؤال اللعبة غير صالح.");
+    ids.add(q.id);
+    if (!Number.isInteger(q.level) || q.level < 1 || q.level > 3)
+      throw Error("اختر مستوى السؤال.");
+    if (typeof q.prompt !== "string" || !q.prompt.trim() || q.prompt.length > 200)
+      throw Error("اكتب السؤال في أقل من 200 حرف.");
+    if (
+      !Array.isArray(q.answers) ||
+      q.answers.length !== 3 ||
+      q.answers.some((a) => typeof a !== "string" || !a.trim() || a.length > 60) ||
+      new Set(q.answers.map((a) => a.trim())).size !== 3 ||
+      !Number.isInteger(q.correct) ||
+      q.correct < 0 ||
+      q.correct > 2
+    )
+      throw Error("اكتب ثلاث إجابات قصيرة مختلفة وحدّد الصحيحة.");
+    return {
+      id: q.id,
+      level: q.level,
+      prompt: q.prompt.trim(),
+      answers: q.answers.map((a) => a.trim()),
+      correct: q.correct,
+    };
+  });
 }
 
 export function validateData(value) {
@@ -136,6 +175,7 @@ export function validateData(value) {
     childName: value.childName.trim(),
     soundAllowed: value.soundAllowed,
     pin: pin ? { salt: pin.salt, hash: pin.hash } : null,
+    gameQuestions: validateGameQuestions(value.gameQuestions ?? []),
   };
 }
 
