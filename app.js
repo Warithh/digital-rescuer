@@ -31,7 +31,7 @@ let category = "الكل";
 let parentUnlocked = false;
 let draft = null;
 let quiz = null;
-let memoryGame = null;
+let wordGame = null;
 let soundOn = false;
 let voiceWarningShown = false;
 let audioContext;
@@ -248,36 +248,110 @@ function renderHome() {
   <section class="parent-invitation"><span class="invitation-icon">${icon("lock", 27)}</span><div><h3>مهمات من تأليف أبي وأمي</h3><p>كل طفل مختلف. اكتب مواقف تناسب طفلك، وشاركْه رحلة التعلّم.</p></div><a href="#parent" class="secondary">افتح لوحة وليّ الأمر ${icon("arrow", 17)}</a></section>`;
 }
 function renderFestival() {
-  if (memoryGame) return renderMemoryGame();
+  if (wordGame) return renderWordGame();
   const link = "https://warithh.github.io/digital-rescuer/";
   return `${heading("نادي أبدع للبرمجة · 1001 مبرمج صغير", "أهلًا بكم في عالم المنقذ الرقمي", "جرّبوا اللعبة هنا، أو خذوا المغامرة معكم إلى الهاتف.")}
-  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="memory-game">🧠 لعبة ذاكرة الأمان</button><button class="secondary" data-action="quick-challenge">⚡ تحدّي البطل</button><a class="secondary" href="#missions">المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 لعبة كلمات ورموز</li><li>🏆 نقاط وشارات وشهادة</li><li>👨‍👩‍👦 لوحة تحكم لوليّ الأمر</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>العب ذاكرة الأمان</h3><p>طابق الرمز مع كلمة السلامة واجمع النجوم.</p></div></article><article><span>٢</span><div><h3>امسح رمز QR</h3><p>افتح كاميرا الهاتف ووجّهها نحو الرمز لتنتقل للنسخة المحمولة.</p></div></article><article><span>٣</span><div><h3>جرّب التحدّي</h3><p>خمسة مواقف سريعة لاختيار التصرف الآمن.</p></div></article></section>`;
+  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="word-game">🔢 تحدّي الأرقام والكلمات</button><button class="secondary" data-action="quick-challenge">⚡ تحدّي المواقف</button><a class="secondary" href="#missions">المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 3 مستويات · 15 سؤالًا</li><li>🔤 أسئلة جديدة كل جولة</li><li>🏆 نجوم وشهادة بطل</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>المستوى الأول: أرقام</h3><p>أكمل التسلسل واجمع النجوم.</p></div></article><article><span>٢</span><div><h3>المستوى الثاني: كلمات</h3><p>أكمل الكلمة العربية الصحيحة.</p></div></article><article><span>٣</span><div><h3>المستوى الثالث: أمان</h3><p>اختر كلمة الأمان المناسبة للموقف.</p></div></article></section>`;
 }
-function startMemoryGame() {
-  const pairs = [
-    { id: "fire", emoji: "🔥", word: "حريق" },
-    { id: "road", emoji: "🚦", word: "طريق" },
-    { id: "medicine", emoji: "💊", word: "دواء" },
-    { id: "internet", emoji: "🔐", word: "إنترنت" },
+// لعبة الأرقام والكلمات: ثلاثة مستويات، وكل جولة تختار أسئلة مختلفة.
+const WORD_GAME_PER_LEVEL = 5;
+const shuffle = (list) => {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+// يصنع سؤالًا من إجابة صحيحة وإجابتين خاطئتين، ويخلط ترتيبها.
+function makeQuestion(prompt, right, wrong, hint = "") {
+  const others = [...new Set(wrong.filter((item) => item !== right))].slice(0, 2);
+  const answers = shuffle([right, ...others]);
+  return { prompt, hint, answers, correct: answers.indexOf(right) };
+}
+// إجابات خاطئة قريبة من الصحيحة وموجبة دائمًا.
+const nearNumbers = (right, step = 1) =>
+  shuffle([right + step, right - step, right + step * 2, right + 1].filter((value) => value > 0 && value !== right)).map(number);
+function numberQuestion() {
+  const kind = randomInt(0, 3);
+  if (kind === 0) {
+    const step = [1, 2, 5, 10][randomInt(0, 3)];
+    const first = randomInt(1, 5) * step;
+    const right = first + step * 3;
+    return makeQuestion(`ما العدد التالي؟ ${[first, first + step, first + step * 2].map(number).join("، ")}، ؟`, number(right), nearNumbers(right, step), "🔢");
+  }
+  if (kind === 1) {
+    const step = randomInt(1, 3);
+    const first = randomInt(1, 6);
+    const right = first + step;
+    return makeQuestion(`ما العدد الناقص؟ ${number(first)}، ؟، ${number(first + step * 2)}، ${number(first + step * 3)}`, number(right), nearNumbers(right), "🧩");
+  }
+  if (kind === 2) {
+    const have = randomInt(2, 6);
+    const won = randomInt(1, 4);
+    return makeQuestion(`معك ${number(have)} نجوم وربحت ${number(won)}. كم نجمة معك الآن؟`, number(have + won), nearNumbers(have + won), "⭐");
+  }
+  const count = randomInt(3, 7);
+  return makeQuestion(`كم إشارة خطر هنا؟ ${"⚠️".repeat(count)}`, number(count), nearNumbers(count), "👀");
+}
+const gameWords = [
+  { word: "حريق", emoji: "🔥", missing: 2 },
+  { word: "طريق", emoji: "🚦", missing: 1 },
+  { word: "دواء", emoji: "💊", missing: 1 },
+  { word: "إسعاف", emoji: "🚑", missing: 2 },
+  { word: "شرطة", emoji: "👮", missing: 1 },
+  { word: "خطر", emoji: "⚠️", missing: 1 },
+  { word: "أمان", emoji: "🛡️", missing: 1 },
+  { word: "مطبخ", emoji: "🍳", missing: 2 },
+  { word: "كهرباء", emoji: "⚡", missing: 1 },
+  { word: "صابون", emoji: "🧼", missing: 2 },
+];
+const otherLetters = ["ب", "ت", "س", "ل", "م", "ن", "ك", "ج", "ق", "ف", "د", "و"];
+function wordQuestion(item) {
+  const letters = [...item.word];
+  const right = letters[item.missing];
+  letters[item.missing] = "ـ؟ـ";
+  return makeQuestion(`أكمل الكلمة: ${letters.join(" ")}`, right, shuffle(otherLetters), item.emoji);
+}
+const safetyWords = [
+  { prompt: "رأيت دخانًا ونارًا في البيت. ماذا يحدث؟", right: "حريق", wrong: ["حفلة", "مطر"], hint: "🔥" },
+  { prompt: "أريد عبور الشارع. ماذا أنتظر؟", right: "الإشارة الخضراء", wrong: ["الكرة", "الحلوى"], hint: "🚦" },
+  { prompt: "وجدت حبوبًا ملوّنة. هل هي حلوى؟", right: "دواء، لا ألمسه", wrong: ["حلوى لذيذة", "لعبة"], hint: "💊" },
+  { prompt: "شخص غريب يقول: تعال معي. ماذا أقول؟", right: "لا، وأخبر أهلي", wrong: ["نعم", "أذهب بسرعة"], hint: "🙅" },
+  { prompt: "سلك كهرباء مكشوف. ماذا أفعل؟", right: "أبتعد وأخبر كبيرًا", wrong: ["ألمسه", "ألعب به"], hint: "⚡" },
+  { prompt: "رسالة على الإنترنت تطلب عنوان بيتي.", right: "لا أرسله", wrong: ["أرسله فورًا", "أرسل صورتي"], hint: "💻" },
+  { prompt: "قبل الأكل يجب أن…", right: "أغسل يديّ", wrong: ["ألعب بالتراب", "أنام"], hint: "🧼" },
+  { prompt: "صديقي سقط وجُرح. ماذا أفعل؟", right: "أنادي شخصًا كبيرًا", wrong: ["أضحك", "أتركه وحده"], hint: "🩹" },
+];
+function buildWordGameLevels() {
+  return [
+    { title: "تحدّي الأرقام", emoji: "🔢", questions: Array.from({ length: WORD_GAME_PER_LEVEL }, numberQuestion) },
+    { title: "أكمل الكلمة", emoji: "🔤", questions: shuffle(gameWords).slice(0, WORD_GAME_PER_LEVEL).map(wordQuestion) },
+    { title: "كلمات الأمان", emoji: "🛡️", questions: shuffle(safetyWords).slice(0, WORD_GAME_PER_LEVEL).map((item) => makeQuestion(item.prompt, item.right, item.wrong, item.hint)) },
   ];
-  memoryGame = {
-    cards: pairs
-      .flatMap((pair) => [
-        { id: `${pair.id}-emoji`, pair: pair.id, label: pair.emoji, kind: "emoji" },
-        { id: `${pair.id}-word`, pair: pair.id, label: pair.word, kind: "word" },
-      ])
-      .sort(() => Math.random() - 0.5),
-    open: [],
-    matched: [],
-    moves: 0,
-    busy: false,
-  };
-  render();
 }
-function renderMemoryGame() {
-  const complete = memoryGame.matched.length === memoryGame.cards.length;
-  return `${heading("لعبة بسيطة للأطفال", "ذاكرة الأمان 🧠", "افتح بطاقتين وطابق الرمز مع كلمة السلامة المناسبة.")}
-  <section class="memory-game"><div class="memory-top"><span>⭐ النجوم: ${number(memoryGame.matched.length / 2)}</span><span>🔢 المحاولات: ${number(memoryGame.moves)}</span><button class="secondary" data-action="memory-reset">إعادة اللعب</button><button class="quiet-button" data-action="memory-exit">عودة للمهرجان</button></div>${complete ? `<div class="memory-win"><span>🎉</span><h2>رائع يا بطل!</h2><p>طابقت كلمات الأمان كلها في ${number(memoryGame.moves)} محاولات.</p><button class="primary" data-action="memory-reset">العب مرة أخرى</button></div>` : `<div class="memory-grid">${memoryGame.cards.map((card) => { const visible = memoryGame.open.includes(card.id) || memoryGame.matched.includes(card.id); return `<button class="memory-card ${visible ? "revealed" : ""} ${memoryGame.matched.includes(card.id) ? "matched" : ""} ${card.kind}" data-action="memory-card" data-id="${card.id}" aria-label="${visible ? e(card.label) : "بطاقة مخفية"}" ${memoryGame.busy || visible ? "disabled" : ""}><span>${visible ? e(card.label) : "؟"}</span></button>`; }).join("")}</div>`}</section>`;
+function startWordGame() {
+  wordGame = { levels: buildWordGameLevels(), level: 0, index: 0, stars: 0, answer: null, tries: 0, levelDone: false, complete: false };
+  render();
+  window.scrollTo(0, 0);
+}
+function renderWordGame() {
+  const total = wordGame.levels.length * WORD_GAME_PER_LEVEL;
+  if (wordGame.complete)
+    return `${heading("أكملت المستويات الثلاثة", "أنت بطل الأرقام والكلمات! 🎉", "تعلّمت، ولعبت، واخترت الإجابات الصحيحة.")}<section class="word-game win"><span>🏆</span><h2>جمعت ${number(wordGame.stars)} من ${number(total)} نجمة</h2><p>${wordGame.stars === total ? "علامة كاملة! أنت منقذ رقمي حقيقي." : "أحسنت! العب مرة أخرى بأسئلة جديدة واجمع كل النجوم."}</p><div><button class="primary" data-action="word-restart">العب مرة أخرى</button><button class="secondary" data-action="word-exit">عودة للمهرجان</button></div></section>`;
+  const level = wordGame.levels[wordGame.level];
+  const progress = `<div class="game-progress"><span class="game-stars">⭐ ${number(wordGame.stars)} / ${number(total)}</span><div>${wordGame.levels.map((item, index) => `<i class="${index < wordGame.level || (index === wordGame.level && wordGame.levelDone) ? "done" : index === wordGame.level ? "now" : ""}" title="${item.title}">${number(index + 1)}</i>`).join("")}</div><button class="quiet-button" data-action="word-exit">عودة</button></div>`;
+  if (wordGame.levelDone) {
+    const next = wordGame.levels[wordGame.level + 1];
+    return `${heading("مستوى جديد مفتوح", `أنهيت المستوى ${number(wordGame.level + 1)} 🎉`, `التالي: ${next.emoji} ${next.title}`)}<section class="word-game">${progress}<div class="word-question level-up"><span>${next.emoji}</span><h2>${next.title}</h2><small>المستوى ${number(wordGame.level + 2)} من ${number(wordGame.levels.length)}</small></div><button class="primary word-continue" data-action="word-level">ابدأ المستوى ${number(wordGame.level + 2)}</button></section>`;
+  }
+  const question = level.questions[wordGame.index];
+  const answered = wordGame.answer !== null;
+  const correct = wordGame.answer === question.correct;
+  const lastQuestion = wordGame.index + 1 === level.questions.length;
+  const nextLabel = !correct ? "أحاول مجددًا" : !lastQuestion ? "السؤال التالي" : wordGame.level + 1 === wordGame.levels.length ? "شاهد نتيجتك" : "افتح المستوى التالي";
+  return `${heading("تحدّي الأرقام والكلمات", `${level.emoji} المستوى ${number(wordGame.level + 1)}: ${level.title}`, "الإجابة الصحيحة من أول محاولة تعطيك نجمة.")}<section class="word-game">${progress}<div class="word-question"><span>${question.hint || level.emoji}</span><h2>${e(question.prompt)}</h2><small>السؤال ${number(wordGame.index + 1)} من ${number(level.questions.length)}</small></div><div class="word-options">${question.answers.map((answer, index) => `<button class="word-option ${answered && correct && index === question.correct ? "correct" : answered && index === wordGame.answer && !correct ? "incorrect" : ""}" data-action="word-answer" data-choice="${index}" ${answered ? "disabled" : ""}>${e(answer)}</button>`).join("")}</div>${answered ? `<div class="word-feedback ${correct ? "good" : "try"}" role="status"><strong>${correct ? (wordGame.tries === 1 ? "أحسنت! نجمة جديدة 🌟" : "صحيح! أحسنت المحاولة 👏") : "ليست هذه، فكّر مرة أخرى 🤔"}</strong><button class="primary" data-action="word-next">${nextLabel}</button></div>` : ""}</section>`;
 }
 function missionGrid(missions) {
   if (!missions.length)
@@ -490,35 +564,41 @@ document.addEventListener("click", async (event) => {
     if (m) openQuiz(m.id);
   }
   if (action === "quick-challenge") openQuickChallenge();
-  if (action === "memory-game") startMemoryGame();
-  if (action === "memory-reset") startMemoryGame();
-  if (action === "memory-exit") {
-    memoryGame = null;
+  if (action === "word-game") startWordGame();
+  if (action === "word-restart") startWordGame();
+  if (action === "word-exit") {
+    wordGame = null;
     render();
   }
-  if (action === "memory-card" && memoryGame && !memoryGame.busy) {
-    const card = memoryGame.cards.find((item) => item.id === id);
-    if (!card || memoryGame.open.includes(id) || memoryGame.matched.includes(id))
-      return;
-    memoryGame.open.push(id);
-    if (memoryGame.open.length === 2) {
-      memoryGame.moves += 1;
-      memoryGame.busy = true;
-      const [first, second] = memoryGame.open.map((cardId) =>
-        memoryGame.cards.find((item) => item.id === cardId),
-      );
-      const match = first.pair === second.pair;
-      render();
-      setTimeout(() => {
-        if (match) {
-          memoryGame.matched.push(first.id, second.id);
-          playSound("success");
-        } else playSound("retry");
-        memoryGame.open = [];
-        memoryGame.busy = false;
-        render();
-      }, match ? 450 : 850);
-    } else render();
+  if (action === "word-answer" && wordGame && wordGame.answer === null) {
+    const question = wordGame.levels[wordGame.level].questions[wordGame.index];
+    wordGame.answer = Number(button.dataset.choice);
+    wordGame.tries += 1;
+    const correct = wordGame.answer === question.correct;
+    if (correct && wordGame.tries === 1) wordGame.stars += 1;
+    playSound(correct ? "success" : "retry");
+    render();
+    document.querySelector(".word-feedback")?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  if (action === "word-next" && wordGame) {
+    const level = wordGame.levels[wordGame.level];
+    const correct = wordGame.answer === level.questions[wordGame.index].correct;
+    wordGame.answer = null;
+    if (correct) {
+      wordGame.tries = 0;
+      if (wordGame.index + 1 < level.questions.length) wordGame.index += 1;
+      else if (wordGame.level + 1 < wordGame.levels.length) wordGame.levelDone = true;
+      else wordGame.complete = true;
+    }
+    render();
+    if (correct) window.scrollTo(0, 0);
+  }
+  if (action === "word-level" && wordGame) {
+    wordGame.level += 1;
+    wordGame.index = 0;
+    wordGame.levelDone = false;
+    render();
+    window.scrollTo(0, 0);
   }
   if (action === "mission") openQuiz(id);
   if (action === "filter") {
@@ -826,7 +906,7 @@ function navigate() {
     parentUnlocked = false;
     draft = null;
   }
-  if (next !== "festival") memoryGame = null;
+  if (next !== "festival") wordGame = null;
   currentScreen = next;
   render();
   window.scrollTo(0, 0);
