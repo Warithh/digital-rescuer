@@ -81,8 +81,11 @@ export function validateData(value) {
       m.correct > 2
     )
       throw Error("اكتب ثلاثة خيارات مختلفة وحدّد الإجابة الصحيحة.");
+    // الملفات القديمة لا تحتوي مستوى؛ نبدأها من المستوى الأول دون كسر النسخ الاحتياطية.
+    const level = Number.isInteger(m.level) && m.level >= 1 && m.level <= 3 ? m.level : 1;
     return {
       ...mission,
+      level,
       points: m.points,
       enabled: m.enabled,
       answers: m.answers.map((a) => a.trim()),

@@ -32,6 +32,7 @@ let parentUnlocked = false;
 let draft = null;
 let quiz = null;
 let soundOn = false;
+let voiceWarningShown = false;
 let confirmation = null;
 let toastTimer;
 const main = document.querySelector("#main");
@@ -76,7 +77,12 @@ function escapeHTML(text) {
 const e = escapeHTML;
 const number = (value) => Number(value).toLocaleString("ar-IQ");
 function availableMissions() {
-  return data.missions.filter((m) => m.enabled);
+  return data.missions
+    .filter((m) => m.enabled)
+    .sort((first, second) => first.level - second.level);
+}
+function levelName(level) {
+  return ["", "المستوى ١ · بداية آمنة", "المستوى ٢ · مستكشف واعٍ", "المستوى ٣ · بطل ذكي"][level] || "المستوى ١ · بداية آمنة";
 }
 function completedMissions() {
   return availableMissions().filter((m) => data.completed.includes(m.id));
@@ -110,13 +116,34 @@ function ask(message, run) {
   document.querySelector("#confirm-message").textContent = message;
   confirmDialog.showModal();
 }
+function getArabicVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  return window.speechSynthesis
+    .getVoices()
+    .find((voice) => /^ar([_-]|$)/i.test(voice.lang));
+}
 function speak(text) {
-  if (!soundOn || !data.soundAllowed || !("speechSynthesis" in window)) return;
-  speechSynthesis.cancel();
+  if (!soundOn || !data.soundAllowed || !("speechSynthesis" in window))
+    return false;
   const speech = new SpeechSynthesisUtterance(text);
-  speech.lang = "ar-SA";
+  const arabicVoice = getArabicVoice();
+  // نفضّل صوتًا عربيًا من الجهاز، لكن لا نمنع القراءة إن لم يكن مثبتًا.
+  if (arabicVoice) speech.voice = arabicVoice;
+  else if (!voiceWarningShown) {
+    voiceWarningShown = true;
+    notify("لم نجد صوتًا عربيًا مثبتًا؛ قد تختلف جودة النطق. النص ظاهر دائمًا للطفل.", true);
+  }
+  speech.lang = arabicVoice?.lang || "ar-SA";
   speech.rate = 0.85;
-  speechSynthesis.speak(speech);
+  speech.onerror = () => {
+    if (!voiceWarningShown) {
+      voiceWarningShown = true;
+      notify("تعذّرت القراءة الصوتية على هذا الجهاز. يمكنك متابعة البرنامج بالنصوص الظاهرة.", true);
+    }
+  };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(speech);
+  return true;
 }
 
 // ٢. نرسم الشاشات باستخدام دوال صغيرة ذات أسماء واضحة.
@@ -176,13 +203,13 @@ function renderHome() {
 function missionGrid(missions) {
   if (!missions.length)
     return `<div class="empty-state"><span>🌱</span><h3>مغامرات جديدة تنتظرك</h3><p>يمكن لوليّ أمرك إضافة مهمة أو إظهارها من لوحته.</p></div>`;
-  return `<div class="mission-grid">${missions.map((m) => `<button class="mission-card ${e(m.color)}" data-action="mission" data-id="${e(m.id)}"><div class="card-top"><span class="mission-emoji">${e(m.emoji)}</span><span class="mission-tag ${data.completed.includes(m.id) ? "finished" : ""}">${data.completed.includes(m.id) ? "✓ أنجزتها" : "اكتشف وتعلّم"}</span></div><small>${e(m.category)}</small><h3>${e(m.title)}</h3><p>${e(m.brief)}</p><div class="card-bottom"><span>${icon("star", 16)} ${number(m.points)} نقطة</span><span class="card-arrow">${icon("arrow", 20)}</span></div><span class="card-decoration" aria-hidden="true">✦</span></button>`).join("")}</div>`;
+  return `<div class="mission-grid">${missions.map((m) => `<button class="mission-card ${e(m.color)}" data-action="mission" data-id="${e(m.id)}"><div class="card-top"><span class="mission-emoji">${e(m.emoji)}</span><span class="mission-tag ${data.completed.includes(m.id) ? "finished" : ""}">${data.completed.includes(m.id) ? "✓ أنجزتها" : "اكتشف وتعلّم"}</span></div><small>${e(m.category)} · ${e(levelName(m.level))}</small><h3>${e(m.title)}</h3><p>${e(m.brief)}</p><div class="card-bottom"><span>${icon("star", 16)} ${number(m.points)} نقطة</span><span class="card-arrow">${icon("arrow", 20)}</span></div><span class="card-decoration" aria-hidden="true">✦</span></button>`).join("")}</div>`;
 }
 function renderMissions() {
   const missions = availableMissions(),
     categories = ["الكل", ...new Set(missions.map((m) => m.category))];
   if (!categories.includes(category)) category = "الكل";
-  return `${heading("كل موقف فرصة للتعلّم", "اختر مهمتك التالية", "اقرأ بهدوء، فكّر، ثم اختر. المهم أن تفهم كيف تتصرّف بأمان.")}${statistics()}<div class="filters" aria-label="تصنيفات المهمات">${categories.map((c) => `<button class="filter ${category === c ? "active" : ""}" aria-pressed="${category === c}" data-action="filter" data-category="${e(c)}">${e(c)}</button>`).join("")}</div>${missionGrid(missions.filter((m) => category === "الكل" || m.category === category))}`;
+  return `${heading("كل موقف فرصة للتعلّم", "اختر مهمتك التالية", "ابدأ بالأساسيات، ثم تقدّم إلى قرارات البطل الذكي.")}${statistics()}<section class="levels-guide" aria-label="مستويات المهمات"><span>١<br><b>بداية آمنة</b></span><i></i><span>٢<br><b>مستكشف واعٍ</b></span><i></i><span>٣<br><b>بطل ذكي</b></span></section><div class="filters" aria-label="تصنيفات المهمات">${categories.map((c) => `<button class="filter ${category === c ? "active" : ""}" aria-pressed="${category === c}" data-action="filter" data-category="${e(c)}">${e(c)}</button>`).join("")}</div>${missionGrid(missions.filter((m) => category === "الكل" || m.category === category))}`;
 }
 function renderAwards() {
   const complete = completedMissions().length,
@@ -220,7 +247,7 @@ function renderParent() {
   <div class="parent-tools"><section class="panel"><h2>التقدّم والنسخ الاحتياطي</h2><p>انقل مهمات طفلك وتقدّمه إلى جهاز آخر بنسخة احتياطية. رمز اللوحة لا يُصدَّر.</p><div class="tool-buttons"><button class="secondary" data-action="export">↓ تنزيل نسخة احتياطية</button><label class="secondary file-button">↑ استعادة نسخة<input type="file" id="backup-file" accept=".json,application/json" aria-label="ملف النسخة الاحتياطية"></label><button class="secondary danger" data-action="reset-progress">إعادة تقدّم الطفل</button><button class="secondary danger" data-action="reset-missions">استعادة المهمات الأصلية</button></div><p class="hint">إخفاء المهمة لا يحذف نقاطها المكتسبة. تعديل سؤال أو إجابات مهمة يعيد تقدّمها وحدها بعد التأكيد.</p></section><section class="panel"><h2>تغيير رمز وليّ الأمر</h2><form id="change-pin-form"><label for="new-pin">الرمز الجديد</label><input id="new-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="new-password"><label for="new-repeat">تأكيد الرمز الجديد</label><input id="new-repeat" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password"><button class="secondary">حفظ الرمز الجديد</button><p class="form-error" role="alert" hidden></p></form></section></div>`;
 }
 function renderEditor() {
-  return `<section class="panel mission-editor"><div class="section-heading"><div><span class="eyebrow">فكرتك تصبح مغامرة</span><h2 id="editor-title" tabindex="-1">${data.missions.some((m) => m.id === draft.id) ? "تعديل المهمة" : "مهمة جديدة من تأليفك"}</h2></div><button class="icon-button" data-action="cancel-edit" aria-label="إغلاق محرّر المهمة">${icon("close", 20)}</button></div><form id="mission-form"><div class="editor-grid"><div class="form-field"><label for="mission-title">عنوان المهمة</label><input id="mission-title" name="title" maxlength="80" required value="${e(draft.title)}"></div><div class="form-field"><label for="mission-category">التصنيف</label><input id="mission-category" name="category" maxlength="60" list="categories" required value="${e(draft.category)}"><datalist id="categories">${[...new Set(data.missions.map((m) => m.category))].map((c) => `<option value="${e(c)}">`).join("")}</datalist></div><div class="form-field"><label for="mission-brief">وصف مختصر</label><input id="mission-brief" name="brief" maxlength="140" required value="${e(draft.brief)}"></div><div class="form-field"><label for="mission-points">نقاط المهمة</label><input id="mission-points" name="points" type="number" min="0" max="1000" step="1" required value="${draft.points}"></div><div class="form-field"><label for="mission-emoji">رمز المهمة</label><select id="mission-emoji" name="emoji">${[...new Set([draft.emoji, "🌟", "🔥", "⚡", "🚦", "🧭", "🔐", "💊", "🏠", "💧", "🎒", "🤝", "🛡️"])].map((emoji) => `<option ${draft.emoji === emoji ? "selected" : ""}>${e(emoji)}</option>`).join("")}</select></div><div class="form-field"><label for="mission-color">لون البطاقة</label><select id="mission-color" name="color">${colors.map((c, i) => `<option value="${c}" ${draft.color === c ? "selected" : ""}>${["برتقالي", "ذهبي", "أزرق", "بنفسجي", "أخضر", "وردي"][i]}</option>`).join("")}</select></div><div class="form-field wide"><label for="mission-question">الموقف أو السؤال</label><textarea id="mission-question" name="question" rows="3" maxlength="1000" required>${e(draft.question)}</textarea></div><fieldset class="wide answer-editor"><legend>الخيارات — اختر دائرة الإجابة الصحيحة</legend>${draft.answers.map((text, i) => `<div><label class="correct-choice"><input type="radio" name="correct" value="${i}" ${draft.correct === i ? "checked" : ""} required> الصحيح ${number(i + 1)}</label><input name="answer${i}" maxlength="500" required aria-label="الخيار ${i + 1}" value="${e(text)}"></div>`).join("")}</fieldset><div class="form-field wide"><label for="mission-why">شرح التصرف الآمن</label><textarea id="mission-why" name="why" rows="3" maxlength="2000" required>${e(draft.why)}</textarea></div><div class="form-field wide"><label for="mission-tip">نصيحة يتذكّرها الطفل</label><input id="mission-tip" name="tip" maxlength="300" required value="${e(draft.tip)}"></div><label class="checkbox-label wide"><input type="checkbox" name="enabled" ${draft.enabled ? "checked" : ""}> إظهار المهمة للطفل بعد حفظها</label></div><p class="hint">تغيير السؤال أو إجاباته يعيد تقدّم هذه المهمة. تغيير نقاطها يؤثر في الإنجازات القادمة فقط.</p><p class="form-error" role="alert" hidden></p><div class="button-row"><button class="primary">حفظ المهمة ${icon("check", 18)}</button><button type="button" class="secondary" data-action="cancel-edit">إلغاء التعديل</button></div></form></section>`;
+  return `<section class="panel mission-editor"><div class="section-heading"><div><span class="eyebrow">فكرتك تصبح مغامرة</span><h2 id="editor-title" tabindex="-1">${data.missions.some((m) => m.id === draft.id) ? "تعديل المهمة" : "مهمة جديدة من تأليفك"}</h2></div><button class="icon-button" data-action="cancel-edit" aria-label="إغلاق محرّر المهمة">${icon("close", 20)}</button></div><form id="mission-form"><div class="editor-grid"><div class="form-field"><label for="mission-title">عنوان المهمة</label><input id="mission-title" name="title" maxlength="80" required value="${e(draft.title)}"></div><div class="form-field"><label for="mission-category">التصنيف</label><input id="mission-category" name="category" maxlength="60" list="categories" required value="${e(draft.category)}"><datalist id="categories">${[...new Set(data.missions.map((m) => m.category))].map((c) => `<option value="${e(c)}">`).join("")}</datalist></div><div class="form-field"><label for="mission-level">درجة الصعوبة</label><select id="mission-level" name="level"><option value="1" ${draft.level === 1 ? "selected" : ""}>المستوى ١: بداية آمنة</option><option value="2" ${draft.level === 2 ? "selected" : ""}>المستوى ٢: مستكشف واعٍ</option><option value="3" ${draft.level === 3 ? "selected" : ""}>المستوى ٣: بطل ذكي</option></select></div><div class="form-field"><label for="mission-brief">وصف مختصر</label><input id="mission-brief" name="brief" maxlength="140" required value="${e(draft.brief)}"></div><div class="form-field"><label for="mission-points">نقاط المهمة</label><input id="mission-points" name="points" type="number" min="0" max="1000" step="1" required value="${draft.points}"></div><div class="form-field"><label for="mission-emoji">رمز المهمة</label><select id="mission-emoji" name="emoji">${[...new Set([draft.emoji, "🌟", "🔥", "⚡", "🚦", "🧭", "🔐", "💊", "🏠", "💧", "🎒", "🤝", "🛡️"])].map((emoji) => `<option ${draft.emoji === emoji ? "selected" : ""}>${e(emoji)}</option>`).join("")}</select></div><div class="form-field"><label for="mission-color">لون البطاقة</label><select id="mission-color" name="color">${colors.map((c, i) => `<option value="${c}" ${draft.color === c ? "selected" : ""}>${["برتقالي", "ذهبي", "أزرق", "بنفسجي", "أخضر", "وردي"][i]}</option>`).join("")}</select></div><div class="form-field wide"><label for="mission-question">الموقف أو السؤال</label><textarea id="mission-question" name="question" rows="3" maxlength="1000" required>${e(draft.question)}</textarea></div><fieldset class="wide answer-editor"><legend>الخيارات — اختر دائرة الإجابة الصحيحة</legend>${draft.answers.map((text, i) => `<div><label class="correct-choice"><input type="radio" name="correct" value="${i}" ${draft.correct === i ? "checked" : ""} required> الصحيح ${number(i + 1)}</label><input name="answer${i}" maxlength="500" required aria-label="الخيار ${i + 1}" value="${e(text)}"></div>`).join("")}</fieldset><div class="form-field wide"><label for="mission-why">شرح التصرف الآمن</label><textarea id="mission-why" name="why" rows="3" maxlength="2000" required>${e(draft.why)}</textarea></div><div class="form-field wide"><label for="mission-tip">نصيحة يتذكّرها الطفل</label><input id="mission-tip" name="tip" maxlength="300" required value="${e(draft.tip)}"></div><label class="checkbox-label wide"><input type="checkbox" name="enabled" ${draft.enabled ? "checked" : ""}> إظهار المهمة للطفل بعد حفظها</label></div><p class="hint">تغيير السؤال أو إجاباته يعيد تقدّم هذه المهمة. تغيير نقاطها يؤثر في الإنجازات القادمة فقط.</p><p class="form-error" role="alert" hidden></p><div class="button-row"><button class="primary">حفظ المهمة ${icon("check", 18)}</button><button type="button" class="secondary" data-action="cancel-edit">إلغاء التعديل</button></div></form></section>`;
 }
 // ٤. عند فتح المهمة نعرض السؤال، وبعد الاختيار نعرض الشرح.
 function openQuiz(id, practice = false) {
@@ -310,6 +337,7 @@ function makeMission() {
     correct: 0,
     why: "",
     tip: "",
+    level: 1,
     points: 100,
     enabled: true,
   };
@@ -321,6 +349,7 @@ function makeSchoolMission() {
     category: "السلامة في المدرسة",
     emoji: "🎒",
     color: "blue",
+    level: 2,
     brief: "تعلّم كيف تتصرّف قرب الأشياء الخطرة في المدرسة.",
     question: "رأيت سلكًا كهربائيًا مكشوفًا قرب أحد المقابس في المدرسة. ماذا تفعل؟",
     answers: [
@@ -591,6 +620,7 @@ document.addEventListener("submit", async (event) => {
       ])
         mission[key] = values.get(key).trim();
       mission.points = Number(values.get("points"));
+      mission.level = Number(values.get("level"));
       mission.correct = Number(values.get("correct"));
       mission.enabled = values.has("enabled");
       mission.answers = [0, 1, 2].map((i) => values.get("answer" + i).trim());

@@ -818,6 +818,34 @@ main {
   margin: 0 0 22px;
   scrollbar-width: thin;
 }
+.levels-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: -6px 0 22px;
+  padding: 13px 16px;
+  border: 1px solid #e4eadb;
+  border-radius: 14px;
+  background: #fbfcf7;
+  color: #668359;
+  text-align: center;
+}
+.levels-guide span {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.levels-guide b {
+  color: #92a184;
+  font-size: 10px;
+  font-weight: 500;
+}
+.levels-guide i {
+  width: 34px;
+  height: 1px;
+  background: #d8e4cd;
+}
 .filter {
   background: #fff;
   border: 1px solid var(--line);
@@ -2237,6 +2265,20 @@ input[type="radio"] {
   .filters {
     gap: 7px;
     margin-bottom: 19px;
+  }
+  .levels-guide {
+    gap: 7px;
+    margin: -3px 0 18px;
+    padding: 11px 8px;
+  }
+  .levels-guide span {
+    font-size: 13px;
+  }
+  .levels-guide b {
+    font-size: 8px;
+  }
+  .levels-guide i {
+    width: 18px;
   }
   .filter {
     font-size: 11px;

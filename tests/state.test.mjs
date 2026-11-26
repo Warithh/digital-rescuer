@@ -67,7 +67,7 @@ test("migrates old progress and accepts v2 backups and empty mission lists", () 
   const empty = newData();
   empty.missions = [];
   assert.equal(validateData(empty).missions.length, 0);
-  assert.equal(validateData(newData()).missions.length, 6);
+  assert.equal(validateData(newData()).missions.length, newData().missions.length);
 });
 test("PIN digest stays compatible with previous SHA-256 salt scheme", async () => {
   const value = await makePin("1234", "00112233445566778899aabbccddeeff");
