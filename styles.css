@@ -410,6 +410,36 @@ main {
   color: #3c684b;
   gap: 24px;
 }
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.hero-challenge,
+.school-template {
+  border: 1px solid #d9eaca;
+  color: #39765e;
+  background: #f8fced;
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 9px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+}
+.hero-challenge small {
+  display: block;
+  opacity: 0.72;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.hero-challenge:hover,
+.school-template:hover {
+  background: #ebf7de;
+  transform: translateY(-1px);
+}
 .hero-start:hover:not(:disabled) {
   background: #ffe6a4;
 }
@@ -899,6 +929,38 @@ main {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
+}
+.certificate-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 22px;
+  padding: 25px;
+  border: 1px solid #e9d79b;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffaf0, #f3f9e9);
+}
+.certificate-card > div {
+  flex: 1;
+}
+.certificate-card h2 {
+  color: #5e7844;
+  margin: 5px 0;
+  font-size: 22px;
+}
+.certificate-card p {
+  color: #7e8d72;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.certificate-spark {
+  font-size: 55px;
+  color: #d5ad49;
+}
+.print-certificate {
+  display: none;
 }
 .achievement {
   text-align: center;
@@ -1427,6 +1489,12 @@ input[type="radio"] {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.library-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
 }
 .managed-mission {
   display: flex;
@@ -2519,6 +2587,105 @@ input[type="radio"] {
     scroll-margin-top: 17px;
   }
 }
+.challenge-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f6f1d8;
+  color: #a38029;
+  font-size: 11px;
+  font-weight: 700;
+}
+.challenge-result {
+  text-align: center;
+  padding: 18px 5px 4px;
+  outline: none;
+}
+.challenge-trophy {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 16px;
+  border-radius: 28px;
+  background: #fff7d8;
+  font-size: 47px;
+}
+.challenge-result h2 {
+  color: #557a46;
+  font-size: 27px;
+  margin: 7px 0 10px;
+}
+.challenge-result p {
+  max-width: 440px;
+  margin: auto;
+  color: #71806b;
+  font-size: 14px;
+  line-height: 2;
+}
+.challenge-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 23px;
+}
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #print-certificate,
+  #print-certificate * {
+    visibility: visible !important;
+  }
+  #print-certificate {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 18px solid #d6b85b;
+    outline: 7px solid #f2e4a5;
+    outline-offset: -31px;
+    background: #fffdf5;
+    color: #567142;
+    padding: 44px;
+  }
+  .print-certificate .certificate-emblem {
+    font-size: 76px;
+  }
+  .print-certificate > p {
+    color: #a88636;
+    font-size: 23px;
+    margin: 16px 0 3px;
+  }
+  .print-certificate h1 {
+    margin: 0;
+    font-size: 44px;
+  }
+  .print-certificate strong {
+    margin: 25px 0 12px;
+    color: #aa8c39;
+    font-size: 32px;
+  }
+  .print-certificate > span {
+    font-size: 18px;
+    max-width: 550px;
+    line-height: 2;
+  }
+  .print-certificate footer {
+    margin-top: 45px;
+    color: #7d8d70;
+    font-size: 15px;
+    line-height: 2;
+  }
+}
 @media (max-width: 370px) {
   .hero {
     padding-right: 18px;
@@ -2598,5 +2765,71 @@ input[type="radio"] {
 @media (max-width: 650px) {
   .floating-label {
     display: none;
+  }
+  .hero-actions {
+    align-items: stretch;
+    gap: 8px;
+  }
+  .hero-challenge {
+    min-height: 43px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+  .hero-challenge small {
+    font-size: 8px;
+  }
+  .library-actions {
+    width: 100%;
+  }
+  .school-template,
+  .library-actions .primary {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 9px;
+    font-size: 10px;
+  }
+  .certificate-card {
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px 15px;
+  }
+  .certificate-spark {
+    font-size: 39px;
+  }
+  .certificate-card h2 {
+    font-size: 18px;
+    line-height: 1.7;
+  }
+  .certificate-card p {
+    font-size: 10px;
+  }
+  .certificate-card .primary {
+    width: 100%;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .challenge-progress {
+    margin-bottom: 10px;
+    font-size: 10px;
+  }
+  .challenge-trophy {
+    width: 78px;
+    height: 78px;
+    border-radius: 23px;
+    font-size: 39px;
+  }
+  .challenge-result h2 {
+    font-size: 22px;
+  }
+  .challenge-result p {
+    font-size: 12px;
+  }
+  .challenge-result-actions {
+    flex-direction: column;
+  }
+  .challenge-result-actions button {
+    width: 100%;
+    justify-content: center;
   }
 }

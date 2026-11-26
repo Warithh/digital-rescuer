@@ -169,7 +169,7 @@ function renderHome() {
     availableMissions()[0];
   return `${heading("كل اختيار آمن يصنع بطلًا", data.childName ? `أهلًا بالبطل ${e(data.childName)}! 👋` : "أهلًا يا بطل السلامة! 👋", "مغامرات صغيرة، معرفة كبيرة. لنكتشف الاختيار الأكثر أمانًا معًا.")}
   ${storageIssue ? `<div class="recovery-note" role="alert">${e(storageIssue)} <a href="#parent">فتح لوحة وليّ الأمر</a></div>` : ""}
-  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><div class="hero-details"><span>✓ دون مؤقّت</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
+  <section class="hero"><div class="hero-copy"><span class="hero-tag"><span></span>تعلّم · جرّب · احمِ نفسك</span><h2>شجاعتك تبدأ<br>باختيار <span>آمن.</span></h2><p>لست بحاجة إلى قوة خارقة.<br>فكّر بهدوء، تعلّم من الموقف،<br class="phone-only"> وكن بطلًا في الحياة.</p><div class="hero-actions"><button class="primary hero-start" data-action="start" ${!next ? "disabled" : ""}>${next ? (completedMissions().length ? "أكمل مغامرتك" : "هيا نبدأ المغامرة") : "بانتظار مهمات من وليّ أمرك"}${icon("arrow", 21)}</button><button class="hero-challenge" data-action="quick-challenge" ${availableMissions().length < 3 ? "disabled" : ""}>⚡ تحدّي البطل السريع <small>٣ مواقف</small></button></div><div class="hero-details"><span>✓ دون مؤقّت</span><span>✓ نتعلّم من الخطأ</span></div></div><div class="hero-visual"><div class="hero-orbit"></div><img src="assets/hero.svg" alt="بطل السلامة الصغير يحمل درع الاختيار الآمن"><div class="floating-label">${icon("shield", 18)} بطل اليوم، واعٍ للغد</div><span class="hero-spark spark-one">✦</span><span class="hero-spark spark-two">✧</span></div></section>
   ${statistics()}<section class="mission-section"><div class="section-heading"><div><span class="eyebrow">رحلتك إلى عالم أكثر أمانًا</span><h2>مهمات صغيرة، بطولة كبيرة</h2></div><a href="#missions" class="text-link">كل المهمات ${icon("arrow", 17)}</a></div>${missionGrid(availableMissions().slice(0, 6))}</section>
   <section class="parent-invitation"><span class="invitation-icon">${icon("lock", 27)}</span><div><h3>مهمات من تأليف أبي وأمي</h3><p>كل طفل مختلف. اكتب مواقف تناسب طفلك، وشاركْه رحلة التعلّم.</p></div><a href="#parent" class="secondary">افتح لوحة وليّ الأمر ${icon("arrow", 17)}</a></section>`;
 }
@@ -197,7 +197,7 @@ function renderAwards() {
     )
     .join(
       "",
-    )}</div><p class="hint">يمكن لوليّ الأمر إعادة التقدّم من لوحته عند بدء رحلة جديدة.</p>`;
+    )}</div>${total > 0 && complete === total ? `<section class="certificate-card"><span class="certificate-spark">✦</span><div><span class="eyebrow">إنجاز يستحق الاحتفال</span><h2>شهادة البطل الرقمي جاهزة</h2><p>أكملت جميع مهمات السلامة. اطبع شهادتك واحتفل بإنجازك!</p></div><button class="primary" data-action="print-certificate">${icon("award", 18)} اطبع الشهادة</button></section><section id="print-certificate" class="print-certificate" aria-label="شهادة البطل الرقمي"><div class="certificate-emblem">🏆</div><p>شهادة تقدير</p><h1>بطل المنقذ الرقمي</h1><strong>${e(data.childName || "بطل السلامة")}</strong><span>أكمل مهمات السلامة واتخذ اختيارات آمنة بوعي وشجاعة.</span><footer>برمجة وتطوير: مرتضى مصطفى العوادي<br>نادي أبدع للبرمجة · 1001 مبرمج صغير</footer></section>` : ""}<p class="hint">يمكن لوليّ الأمر إعادة التقدّم من لوحته عند بدء رحلة جديدة.</p>`;
 }
 function renderAbout() {
   return `${heading("البرمجة تصنع فرقًا", "فكرة صغيرة، أثر كبير", "تعرّف إلى هوية المشروع والهدف منه وكيف بُني.")}
@@ -215,7 +215,7 @@ function renderParent() {
   ${storageIssue ? `<div class="recovery-note">${e(storageIssue)}<button class="secondary" data-action="fresh-start">بدء جديد بعد التأكيد</button></div>` : ""}
   <section class="parent-overview"><div><strong>${number(data.missions.length)}</strong><span>مهمة في مكتبتك</span></div><div><strong>${number(availableMissions().length)}</strong><span>مهمة ظاهرة للطفل</span></div><div><strong>${number(data.completed.length)}</strong><span>مهمة أنجزها طفلك</span></div><div><strong>${number(totalPoints(data))}</strong><span>مجموع نقاط الطفل</span></div></section>
   <section class="panel"><div class="section-heading"><div><span class="eyebrow">رحلة تحمل اسمه</span><h2>إعدادات طفلك</h2></div></div><form id="settings-form" class="settings-form"><div class="form-field"><label for="child-name">اسم الطفل</label><input id="child-name" name="childName" maxlength="40" value="${e(data.childName)}" placeholder="اختياري، مثل: علي"></div><label class="checkbox-label"><input name="soundAllowed" type="checkbox" ${data.soundAllowed ? "checked" : ""}> السماح بالقراءة الصوتية</label><button class="primary">حفظ الإعدادات</button></form></section>
-  <section class="panel"><div class="section-heading"><div><span class="eyebrow">كل موقف تكتبه قد يصنع فرقًا</span><h2>مكتبة المهمات</h2><p>اكتب، عدّل، أخفِ، ورتّب. جرّب المهمات دون التأثير في نقاط الطفل.</p></div><button class="primary" data-action="add" ${data.missions.length >= 100 ? "disabled" : ""}>${icon("plus", 18)} إضافة مهمة</button></div><div class="managed-list">${data.missions.map((m, index) => `<article class="managed-mission"><span class="managed-emoji ${e(m.color)}">${e(m.emoji)}</span><div class="managed-info"><h3>${e(m.title)}</h3><p>${e(m.category)} · ${number(m.points)} نقطة · ${data.completed.includes(m.id) ? "مكتملة" : "لم تكتمل"}</p><small>إجابات صحيحة: ${number(data.attempts[m.id]?.correct || 0)} · محاولات تحتاج مراجعة: ${number(data.attempts[m.id]?.wrong || 0)}</small></div><div class="manage-buttons"><button class="visibility-button ${m.enabled ? "visible" : ""}" data-action="visibility" data-id="${e(m.id)}" aria-pressed="${m.enabled}">${m.enabled ? "✓ ظاهرة" : "مخفية"}</button><button class="small-button" data-action="move-up" data-id="${e(m.id)}" aria-label="تقديم ${e(m.title)}" ${index === 0 ? "disabled" : ""}>↑</button><button class="small-button" data-action="move-down" data-id="${e(m.id)}" aria-label="تأخير ${e(m.title)}" ${index === data.missions.length - 1 ? "disabled" : ""}>↓</button><button class="small-button" data-action="practice" data-id="${e(m.id)}" aria-label="تجربة ${e(m.title)}">تجربة</button><button class="small-button" data-action="edit" data-id="${e(m.id)}" aria-label="تعديل ${e(m.title)}">تعديل</button><button class="small-button danger" data-action="delete" data-id="${e(m.id)}" aria-label="حذف ${e(m.title)}">حذف</button></div></article>`).join("") || '<p class="empty-state">أضف أول مهمة لطفلك.</p>'}</div></section>
+  <section class="panel"><div class="section-heading"><div><span class="eyebrow">كل موقف تكتبه قد يصنع فرقًا</span><h2>مكتبة المهمات</h2><p>اكتب، عدّل، أخفِ، ورتّب. جرّب المهمات دون التأثير في نقاط الطفل.</p></div><div class="library-actions"><button class="school-template" data-action="school-template" ${data.missions.length >= 100 ? "disabled" : ""}>🎒 مهمة أمان المدرسة</button><button class="primary" data-action="add" ${data.missions.length >= 100 ? "disabled" : ""}>${icon("plus", 18)} إضافة مهمة</button></div></div><div class="managed-list">${data.missions.map((m, index) => `<article class="managed-mission"><span class="managed-emoji ${e(m.color)}">${e(m.emoji)}</span><div class="managed-info"><h3>${e(m.title)}</h3><p>${e(m.category)} · ${number(m.points)} نقطة · ${data.completed.includes(m.id) ? "مكتملة" : "لم تكتمل"}</p><small>إجابات صحيحة: ${number(data.attempts[m.id]?.correct || 0)} · محاولات تحتاج مراجعة: ${number(data.attempts[m.id]?.wrong || 0)}</small></div><div class="manage-buttons"><button class="visibility-button ${m.enabled ? "visible" : ""}" data-action="visibility" data-id="${e(m.id)}" aria-pressed="${m.enabled}">${m.enabled ? "✓ ظاهرة" : "مخفية"}</button><button class="small-button" data-action="move-up" data-id="${e(m.id)}" aria-label="تقديم ${e(m.title)}" ${index === 0 ? "disabled" : ""}>↑</button><button class="small-button" data-action="move-down" data-id="${e(m.id)}" aria-label="تأخير ${e(m.title)}" ${index === data.missions.length - 1 ? "disabled" : ""}>↓</button><button class="small-button" data-action="practice" data-id="${e(m.id)}" aria-label="تجربة ${e(m.title)}">تجربة</button><button class="small-button" data-action="edit" data-id="${e(m.id)}" aria-label="تعديل ${e(m.title)}">تعديل</button><button class="small-button danger" data-action="delete" data-id="${e(m.id)}" aria-label="حذف ${e(m.title)}">حذف</button></div></article>`).join("") || '<p class="empty-state">أضف أول مهمة لطفلك.</p>'}</div></section>
   ${draft ? renderEditor() : ""}
   <div class="parent-tools"><section class="panel"><h2>التقدّم والنسخ الاحتياطي</h2><p>انقل مهمات طفلك وتقدّمه إلى جهاز آخر بنسخة احتياطية. رمز اللوحة لا يُصدَّر.</p><div class="tool-buttons"><button class="secondary" data-action="export">↓ تنزيل نسخة احتياطية</button><label class="secondary file-button">↑ استعادة نسخة<input type="file" id="backup-file" accept=".json,application/json" aria-label="ملف النسخة الاحتياطية"></label><button class="secondary danger" data-action="reset-progress">إعادة تقدّم الطفل</button><button class="secondary danger" data-action="reset-missions">استعادة المهمات الأصلية</button></div><p class="hint">إخفاء المهمة لا يحذف نقاطها المكتسبة. تعديل سؤال أو إجابات مهمة يعيد تقدّمها وحدها بعد التأكيد.</p></section><section class="panel"><h2>تغيير رمز وليّ الأمر</h2><form id="change-pin-form"><label for="new-pin">الرمز الجديد</label><input id="new-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" minlength="4" maxlength="8" required autocomplete="new-password"><label for="new-repeat">تأكيد الرمز الجديد</label><input id="new-repeat" name="repeat" type="password" inputmode="numeric" maxlength="8" required autocomplete="new-password"><button class="secondary">حفظ الرمز الجديد</button><p class="form-error" role="alert" hidden></p></form></section></div>`;
 }
@@ -235,11 +235,46 @@ function openQuiz(id, practice = false) {
   renderQuiz();
   speak(mission.question);
 }
+function openQuickChallenge() {
+  const missions = availableMissions();
+  if (missions.length < 3) {
+    notify("أضف أو أظهر ثلاث مهمات على الأقل لبدء التحدّي.", true);
+    return;
+  }
+  // نختار ثلاث مهمات مختلفة كي يبقى العرض قصيرًا ومتنوعًا.
+  const ids = [...missions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3)
+    .map((mission) => mission.id);
+  quiz = {
+    id: ids[0],
+    practice: false,
+    answer: null,
+    challenge: true,
+    ids,
+    index: 0,
+    score: 0,
+    firstTry: true,
+    finished: false,
+  };
+  renderQuiz();
+  speak(data.missions.find((mission) => mission.id === quiz.id).question);
+}
 function renderQuiz() {
+  if (quiz.finished) {
+    quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق التحدّي">${icon("close", 22)}</button><section class="challenge-result" tabindex="-1"><span class="challenge-trophy">🏆</span><span class="eyebrow">اكتمل تحدّي البطل السريع</span><h2>أحسنت يا ${e(data.childName || "بطل السلامة")}!</h2><p>أجبت من أول محاولة عن <strong>${number(quiz.score)} من ${number(quiz.ids.length)}</strong> مواقف. تذكّر: التفكير الهادئ وطلب مساعدة شخص بالغ هما قوة البطل الحقيقي.</p><div class="challenge-result-actions"><button class="primary" data-action="challenge-again">أعد التحدّي ${icon("arrow", 18)}</button><button class="secondary" data-action="close-quiz">إنهاء</button></div></section>`;
+    if (!quizDialog.open) {
+      quizDialog.showModal();
+      document.body.classList.add("dialog-open");
+    }
+    quizDialog.querySelector(".challenge-result").focus();
+    return;
+  }
   const m = data.missions.find((m) => m.id === quiz.id),
     answered = quiz.answer !== null,
     correct = quiz.answer === m.correct;
-  quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق المهمة">${icon("close", 22)}</button><div class="quiz-intro"><span class="quiz-emoji ${e(m.color)}">${e(m.emoji)}</span><span class="eyebrow">${quiz.practice ? "معاينة وليّ الأمر · دون نقاط" : e(m.category)}</span><h2 id="quiz-title">${e(m.title)}</h2><p>${e(m.question)}</p></div><div class="answer-options">${m.answers.map((answer, index) => `<button data-action="answer" data-choice="${index}" class="answer ${answered && index === m.correct ? "correct" : answered && index === quiz.answer ? "incorrect" : ""}" ${answered ? "disabled" : ""}><span>${["أ", "ب", "ج"][index]}</span><b>${e(answer)}</b>${answered && index === m.correct ? icon("check", 23) : ""}</button>`).join("")}</div>${answered ? `<section class="feedback ${correct ? "success" : "learn"}" tabindex="-1" role="status"><h3>${correct ? "اختيار رائع يا بطل! 🌟" : "لا بأس.. نتعلّم معًا 💛"}</h3><p>${e(m.why)}</p><div class="takeaway">💡 ${e(m.tip)}</div><div class="feedback-bottom"><small>${quiz.practice ? "تجربة فقط؛ لن يتغيّر تقدّم الطفل." : correct ? "أنت تتعلّم وتحمي نفسك. المهمة تُحتسب مرة واحدة." : "جرّب مجددًا، دون خسارة نقاط."}</small><button class="primary" data-action="quiz-next">${!correct ? "أحاول مجددًا" : quiz.practice ? "العودة إلى اللوحة" : availableMissions().some((item) => !data.completed.includes(item.id)) ? "المهمة التالية" : "شاهد إنجازاتك"} ${icon("arrow", 18)}</button></div></section>` : '<p class="quiz-hint">خذ وقتك. لا يوجد مؤقّت.. فكّر ثم اختر.</p>'}`;
+  const challengeProgress = quiz.challenge ? `<span class="challenge-progress">⚡ تحدّي البطل ${number(quiz.index + 1)} / ${number(quiz.ids.length)}</span>` : "";
+  quizDialog.innerHTML = `<button class="close-dialog" data-action="close-quiz" aria-label="إغلاق المهمة">${icon("close", 22)}</button>${challengeProgress}<div class="quiz-intro"><span class="quiz-emoji ${e(m.color)}">${e(m.emoji)}</span><span class="eyebrow">${quiz.challenge ? "أجب بأمان وواصل البطولة" : quiz.practice ? "معاينة وليّ الأمر · دون نقاط" : e(m.category)}</span><h2 id="quiz-title">${e(m.title)}</h2><p>${e(m.question)}</p></div><div class="answer-options">${m.answers.map((answer, index) => `<button data-action="answer" data-choice="${index}" class="answer ${answered && index === m.correct ? "correct" : answered && index === quiz.answer ? "incorrect" : ""}" ${answered ? "disabled" : ""}><span>${["أ", "ب", "ج"][index]}</span><b>${e(answer)}</b>${answered && index === m.correct ? icon("check", 23) : ""}</button>`).join("")}</div>${answered ? `<section class="feedback ${correct ? "success" : "learn"}" tabindex="-1" role="status"><h3>${correct ? "اختيار رائع يا بطل! 🌟" : "لا بأس.. نتعلّم معًا 💛"}</h3><p>${e(m.why)}</p><div class="takeaway">💡 ${e(m.tip)}</div><div class="feedback-bottom"><small>${quiz.challenge ? correct ? "موقف آمن آخر بانتظارك." : "تعلّم من النصيحة ثم حاول مجددًا." : quiz.practice ? "تجربة فقط؛ لن يتغيّر تقدّم الطفل." : correct ? "أنت تتعلّم وتحمي نفسك. المهمة تُحتسب مرة واحدة." : "جرّب مجددًا، دون خسارة نقاط."}</small><button class="primary" data-action="quiz-next">${!correct ? "أحاول مجددًا" : quiz.challenge ? quiz.index + 1 === quiz.ids.length ? "شاهد نتيجتك" : "الموقف التالي" : quiz.practice ? "العودة إلى اللوحة" : availableMissions().some((item) => !data.completed.includes(item.id)) ? "المهمة التالية" : "شاهد إنجازاتك"} ${icon("arrow", 18)}</button></div></section>` : '<p class="quiz-hint">خذ وقتك. لا يوجد مؤقّت.. فكّر ثم اختر.</p>'}`;
   if (!quizDialog.open) {
     quizDialog.showModal();
     document.body.classList.add("dialog-open");
@@ -279,6 +314,25 @@ function makeMission() {
     enabled: true,
   };
 }
+function makeSchoolMission() {
+  return {
+    ...makeMission(),
+    title: "أمان المدرسة",
+    category: "السلامة في المدرسة",
+    emoji: "🎒",
+    color: "blue",
+    brief: "تعلّم كيف تتصرّف قرب الأشياء الخطرة في المدرسة.",
+    question: "رأيت سلكًا كهربائيًا مكشوفًا قرب أحد المقابس في المدرسة. ماذا تفعل؟",
+    answers: [
+      "أبتعد عنه وأخبر المعلمة أو شخصًا بالغًا",
+      "ألمسه لأعرف إن كان خطيرًا",
+      "أطلب من أصدقائي أن يقتربوا لمشاهدته",
+    ],
+    correct: 0,
+    why: "الأسلاك المكشوفة قد تكون خطرة. ابتعد عنها ولا تلمسها، ثم أخبر المعلمة أو الإدارة ليتم التعامل معها بأمان.",
+    tip: "أبتعد، لا ألمس، وأخبر شخصًا بالغًا.",
+  };
+}
 
 // ٥. الأزرار ترسل اسم الفعل إلى هذه الدالة الواحدة.
 document.addEventListener("click", async (event) => {
@@ -300,6 +354,7 @@ document.addEventListener("click", async (event) => {
     "reset-progress",
     "reset-missions",
     "fresh-start",
+    "school-template",
   ];
   if (parentActions.includes(action) && !parentUnlocked) return;
   if (action === "sound") {
@@ -324,6 +379,7 @@ document.addEventListener("click", async (event) => {
       availableMissions()[0];
     if (m) openQuiz(m.id);
   }
+  if (action === "quick-challenge") openQuickChallenge();
   if (action === "mission") openQuiz(id);
   if (action === "filter") {
     category = button.dataset.category;
@@ -334,6 +390,8 @@ document.addEventListener("click", async (event) => {
     quiz.answer = Number(button.dataset.choice);
     const result = answerMission(data, quiz.id, quiz.answer, quiz.practice);
     data = result.data;
+    if (quiz.challenge && result.correct && quiz.firstTry) quiz.score += 1;
+    if (quiz.challenge && !result.correct) quiz.firstTry = false;
     if (!quiz.practice) save();
     render();
     renderQuiz();
@@ -344,6 +402,18 @@ document.addEventListener("click", async (event) => {
     if (quiz.answer !== m.correct) {
       quiz.answer = null;
       renderQuiz();
+    } else if (quiz.challenge) {
+      if (quiz.index + 1 < quiz.ids.length) {
+        quiz.index += 1;
+        quiz.id = quiz.ids[quiz.index];
+        quiz.answer = null;
+        quiz.firstTry = true;
+        renderQuiz();
+        speak(data.missions.find((mission) => mission.id === quiz.id).question);
+      } else {
+        quiz.finished = true;
+        renderQuiz();
+      }
     } else if (quiz.practice) closeQuiz();
     else {
       const next = availableMissions().find(
@@ -363,6 +433,8 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "add" && data.missions.length < 100)
     editMission(makeMission());
+  if (action === "school-template" && data.missions.length < 100)
+    editMission(makeSchoolMission());
   if (action === "edit") editMission(data.missions.find((m) => m.id === id));
   if (action === "cancel-edit") {
     draft = null;
@@ -447,6 +519,8 @@ document.addEventListener("click", async (event) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify("حُمّلت نسخة المهمات والتقدّم. رمز الدخول لا يُصدَّر.");
   }
+  if (action === "print-certificate") window.print();
+  if (action === "challenge-again") openQuickChallenge();
   if (action === "confirm-no") {
     confirmDialog.close();
     confirmation = null;
