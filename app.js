@@ -31,6 +31,7 @@ let category = "الكل";
 let parentUnlocked = false;
 let draft = null;
 let quiz = null;
+let memoryGame = null;
 let soundOn = false;
 let voiceWarningShown = false;
 let audioContext;
@@ -247,9 +248,36 @@ function renderHome() {
   <section class="parent-invitation"><span class="invitation-icon">${icon("lock", 27)}</span><div><h3>مهمات من تأليف أبي وأمي</h3><p>كل طفل مختلف. اكتب مواقف تناسب طفلك، وشاركْه رحلة التعلّم.</p></div><a href="#parent" class="secondary">افتح لوحة وليّ الأمر ${icon("arrow", 17)}</a></section>`;
 }
 function renderFestival() {
+  if (memoryGame) return renderMemoryGame();
   const link = "https://warithh.github.io/digital-rescuer/";
   return `${heading("نادي أبدع للبرمجة · 1001 مبرمج صغير", "أهلًا بكم في عالم المنقذ الرقمي", "جرّبوا اللعبة هنا، أو خذوا المغامرة معكم إلى الهاتف.")}
-  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="quick-challenge">⚡ ابدأ لعبة البطل</button><a class="secondary" href="#missions">استكشف جميع المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 18 موقفًا متدرجًا</li><li>🏆 نقاط وشارات وشهادة</li><li>👨‍👩‍👦 لوحة تحكم لوليّ الأمر</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>جرّب على الحاسوب</h3><p>اضغط «ابدأ لعبة البطل» وأجب عن خمسة مواقف.</p></div></article><article><span>٢</span><div><h3>امسح رمز QR</h3><p>افتح كاميرا الهاتف ووجّهها نحو الرمز لتنتقل للنسخة المحمولة.</p></div></article><article><span>٣</span><div><h3>كن بطلًا واعيًا</h3><p>اختر التصرف الآمن، واجمع النجوم، وتعلّم من كل إجابة.</p></div></article></section>`;
+  <section class="festival-stage"><div class="festival-copy"><span class="festival-ribbon">🚨 مشروع مرتضى مصطفى العوادي</span><h2>كل طفل يستطيع<br><span>اختيار الأمان.</span></h2><p>المنقذ الرقمي لعبة تفاعلية تعلّم الأطفال كيف يتصرفون بهدوء في المواقف الخطرة، خطوةً خطوة.</p><div class="festival-actions"><button class="primary" data-action="memory-game">🧠 لعبة ذاكرة الأمان</button><button class="secondary" data-action="quick-challenge">⚡ تحدّي البطل</button><a class="secondary" href="#missions">المهمات ${icon("arrow", 17)}</a></div><ul class="festival-points"><li>🎮 لعبة كلمات ورموز</li><li>🏆 نقاط وشارات وشهادة</li><li>👨‍👩‍👦 لوحة تحكم لوليّ الأمر</li></ul></div><div class="qr-card"><span class="qr-label">امسح الرمز بكاميرا هاتفك</span><img src="assets/festival-qr.png" alt="رمز QR يفتح المنقذ الرقمي على الهاتف" width="260" height="260"><strong>جرّب اللعبة على هاتفك</strong><small>أو افتح الرابط: ${link}</small></div></section><section class="festival-how"><article><span>١</span><div><h3>العب ذاكرة الأمان</h3><p>طابق الرمز مع كلمة السلامة واجمع النجوم.</p></div></article><article><span>٢</span><div><h3>امسح رمز QR</h3><p>افتح كاميرا الهاتف ووجّهها نحو الرمز لتنتقل للنسخة المحمولة.</p></div></article><article><span>٣</span><div><h3>جرّب التحدّي</h3><p>خمسة مواقف سريعة لاختيار التصرف الآمن.</p></div></article></section>`;
+}
+function startMemoryGame() {
+  const pairs = [
+    { id: "fire", emoji: "🔥", word: "حريق" },
+    { id: "road", emoji: "🚦", word: "طريق" },
+    { id: "medicine", emoji: "💊", word: "دواء" },
+    { id: "internet", emoji: "🔐", word: "إنترنت" },
+  ];
+  memoryGame = {
+    cards: pairs
+      .flatMap((pair) => [
+        { id: `${pair.id}-emoji`, pair: pair.id, label: pair.emoji, kind: "emoji" },
+        { id: `${pair.id}-word`, pair: pair.id, label: pair.word, kind: "word" },
+      ])
+      .sort(() => Math.random() - 0.5),
+    open: [],
+    matched: [],
+    moves: 0,
+    busy: false,
+  };
+  render();
+}
+function renderMemoryGame() {
+  const complete = memoryGame.matched.length === memoryGame.cards.length;
+  return `${heading("لعبة بسيطة للأطفال", "ذاكرة الأمان 🧠", "افتح بطاقتين وطابق الرمز مع كلمة السلامة المناسبة.")}
+  <section class="memory-game"><div class="memory-top"><span>⭐ النجوم: ${number(memoryGame.matched.length / 2)}</span><span>🔢 المحاولات: ${number(memoryGame.moves)}</span><button class="secondary" data-action="memory-reset">إعادة اللعب</button><button class="quiet-button" data-action="memory-exit">عودة للمهرجان</button></div>${complete ? `<div class="memory-win"><span>🎉</span><h2>رائع يا بطل!</h2><p>طابقت كلمات الأمان كلها في ${number(memoryGame.moves)} محاولات.</p><button class="primary" data-action="memory-reset">العب مرة أخرى</button></div>` : `<div class="memory-grid">${memoryGame.cards.map((card) => { const visible = memoryGame.open.includes(card.id) || memoryGame.matched.includes(card.id); return `<button class="memory-card ${visible ? "revealed" : ""} ${memoryGame.matched.includes(card.id) ? "matched" : ""} ${card.kind}" data-action="memory-card" data-id="${card.id}" aria-label="${visible ? e(card.label) : "بطاقة مخفية"}" ${memoryGame.busy || visible ? "disabled" : ""}><span>${visible ? e(card.label) : "؟"}</span></button>`; }).join("")}</div>`}</section>`;
 }
 function missionGrid(missions) {
   if (!missions.length)
@@ -462,6 +490,36 @@ document.addEventListener("click", async (event) => {
     if (m) openQuiz(m.id);
   }
   if (action === "quick-challenge") openQuickChallenge();
+  if (action === "memory-game") startMemoryGame();
+  if (action === "memory-reset") startMemoryGame();
+  if (action === "memory-exit") {
+    memoryGame = null;
+    render();
+  }
+  if (action === "memory-card" && memoryGame && !memoryGame.busy) {
+    const card = memoryGame.cards.find((item) => item.id === id);
+    if (!card || memoryGame.open.includes(id) || memoryGame.matched.includes(id))
+      return;
+    memoryGame.open.push(id);
+    if (memoryGame.open.length === 2) {
+      memoryGame.moves += 1;
+      memoryGame.busy = true;
+      const [first, second] = memoryGame.open.map((cardId) =>
+        memoryGame.cards.find((item) => item.id === cardId),
+      );
+      const match = first.pair === second.pair;
+      render();
+      setTimeout(() => {
+        if (match) {
+          memoryGame.matched.push(first.id, second.id);
+          playSound("success");
+        } else playSound("retry");
+        memoryGame.open = [];
+        memoryGame.busy = false;
+        render();
+      }, match ? 450 : 850);
+    } else render();
+  }
   if (action === "mission") openQuiz(id);
   if (action === "filter") {
     category = button.dataset.category;
@@ -768,6 +826,7 @@ function navigate() {
     parentUnlocked = false;
     draft = null;
   }
+  if (next !== "festival") memoryGame = null;
   currentScreen = next;
   render();
   window.scrollTo(0, 0);

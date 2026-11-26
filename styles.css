@@ -452,6 +452,82 @@ main {
   font-size: 11px;
   line-height: 1.9;
 }
+.memory-game {
+  padding: 25px;
+  border: 1px solid #dcead0;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #f8fcef, #fffaf0);
+}
+.memory-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #668359;
+  font-size: 13px;
+  font-weight: 700;
+}
+.memory-top .quiet-button {
+  margin-right: auto;
+}
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 760px;
+  margin: auto;
+}
+.memory-card {
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #5d8b65, #3b6f5b);
+  box-shadow: inset 0 -6px #224d4240, 0 8px 16px #42683b18;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.memory-card:hover:not(:disabled) {
+  transform: translateY(-4px) rotate(-1deg);
+}
+.memory-card > span {
+  font-size: 46px;
+  font-weight: 800;
+}
+.memory-card.word > span {
+  font-size: 22px;
+}
+.memory-card.revealed {
+  background: #fff;
+  color: #4f7652;
+  border: 2px solid #d9e8ca;
+  box-shadow: 0 8px 17px #40633c12;
+}
+.memory-card.matched {
+  background: #fff7d8;
+  border-color: #f1cf72;
+  color: #9c7622;
+}
+.memory-win {
+  padding: 35px 15px;
+  text-align: center;
+}
+.memory-win > span {
+  font-size: 60px;
+}
+.memory-win h2 {
+  margin: 8px 0;
+  color: #52754d;
+  font-size: 27px;
+}
+.memory-win p {
+  margin-bottom: 18px;
+  color: #7d8d70;
+}
 .hero::after {
   content: "";
   position: absolute;
@@ -1828,6 +1904,34 @@ input[type="radio"] {
   }
   .festival-how article {
     padding: 14px;
+  }
+  .memory-game {
+    padding: 16px 12px;
+    border-radius: 18px;
+  }
+  .memory-top {
+    gap: 7px;
+    font-size: 10px;
+  }
+  .memory-top .secondary,
+  .memory-top .quiet-button {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 9px;
+  }
+  .memory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .memory-card {
+    min-height: 112px;
+    border-radius: 15px;
+  }
+  .memory-card > span {
+    font-size: 40px;
+  }
+  .memory-card.word > span {
+    font-size: 20px;
   }
   .hero h2 {
     font-size: 57px;
