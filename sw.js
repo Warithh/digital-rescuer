@@ -1,4 +1,5 @@
 // نحفظ ملفات البرنامج فقط. بيانات الطفل تبقى في localStorage.
+// مع الإنترنت نجلب أحدث نسخة دائمًا، ودون إنترنت نستخدم النسخة المحفوظة.
 const CACHE = "digital-rescuer-__VERSION__";
 const FILES = [
   "./",
@@ -19,7 +20,10 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(FILES))
+      // cache: "reload" يتجاوز ذاكرة المتصفح كي لا نحفظ ملفات قديمة بالخطأ.
+      .then((cache) =>
+        cache.addAll(FILES.map((file) => new Request(file, { cache: "reload" }))),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -40,25 +44,28 @@ self.addEventListener("activate", (event) => {
   );
 });
 self.addEventListener("fetch", (event) => {
+  const request = event.request;
   if (
-    event.request.method !== "GET" ||
-    new URL(event.request.url).origin !== self.location.origin
+    request.method !== "GET" ||
+    new URL(request.url).origin !== self.location.origin
   )
     return;
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(new URL("./index.html", self.registration.scope)),
-      ),
-    );
-  } else {
-    event.respondWith(
-      caches
-        .open(CACHE)
-        .then(
-          async (cache) =>
-            (await cache.match(event.request)) || fetch(event.request),
-        ),
-    );
-  }
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const fresh = await fetch(request, { cache: "no-cache" });
+        if (fresh.ok && request.mode !== "navigate")
+          cache.put(request, fresh.clone());
+        return fresh;
+      } catch {
+        if (request.mode === "navigate")
+          return (
+            (await cache.match(new URL("./index.html", self.registration.scope))) ||
+            Response.error()
+          );
+        return (await cache.match(request)) || Response.error();
+      }
+    })(),
+  );
 });

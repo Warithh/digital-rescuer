@@ -1009,4 +1009,33 @@ if (
   location.protocol !== "file:" &&
   !document.documentElement.hasAttribute("data-standalone")
 )
-  navigator.serviceWorker.register("./sw.js").catch(() => {});
+{
+  // التحديث التلقائي: نفحص وجود نسخة جديدة عند الفتح وعند العودة للتطبيق.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let updateWaiting = false;
+  const applyUpdate = () => {
+    if (!updateWaiting) return;
+    updateWaiting = false;
+    location.reload();
+  };
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) return;
+    updateWaiting = true;
+    // لا نقاطع الطفل أثناء سؤال أو لعبة أو تعديل؛ نحدّث عند انتهائه أو عند الخروج.
+    if (!quiz && !wordGame && !draft) applyUpdate();
+  });
+  window.addEventListener("hashchange", () => {
+    if (!quiz && !wordGame && !draft) applyUpdate();
+  });
+  navigator.serviceWorker
+    .register("./sw.js", { updateViaCache: "none" })
+    .then((registration) => {
+      const check = () => registration.update().catch(() => {});
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") check();
+        else applyUpdate();
+      });
+      setInterval(check, 30 * 60 * 1000);
+    })
+    .catch(() => {});
+}
