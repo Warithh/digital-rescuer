@@ -127,24 +127,33 @@ function getArabicVoice() {
   const feminine = /salma|hoda|layla|laila|zariyah|fatima|female|woman/i;
   return arabicVoices.find((voice) => feminine.test(voice.name)) || arabicVoices[0] || null;
 }
-function speak(text) {
+function speak(text, retried = false) {
   if (!soundOn || !data.soundAllowed || !("speechSynthesis" in window))
     return false;
-  const speech = new SpeechSynthesisUtterance(text);
   const arabicVoice = getArabicVoice();
-  // نفضّل صوتًا عربيًا من الجهاز، لكن لا نمنع القراءة إن لم يكن مثبتًا.
-  if (arabicVoice) speech.voice = arabicVoice;
-  else if (!voiceWarningShown) {
-    voiceWarningShown = true;
-    notify("لم نجد صوتًا عربيًا مثبتًا؛ قد تختلف جودة النطق. النص ظاهر دائمًا للطفل.", true);
+  // بعض المتصفحات تحمّل قائمة الأصوات بعد فتح الصفحة بقليل.
+  if (!arabicVoice && !retried) {
+    setTimeout(() => speak(text, true), 350);
+    return true;
   }
-  speech.lang = arabicVoice?.lang || "ar-SA";
-  speech.rate = 0.8;
-  speech.pitch = 1.08;
-  speech.onerror = () => {
+  if (!arabicVoice) {
     if (!voiceWarningShown) {
       voiceWarningShown = true;
-      notify("تعذّرت القراءة الصوتية على هذا الجهاز. يمكنك متابعة البرنامج بالنصوص الظاهرة.", true);
+      notify("لا يوجد صوت عربي في هذا المتصفح. شغّل صوت العربية من إعدادات الجهاز ثم أعد فتح التطبيق.", true);
+    }
+    return false;
+  }
+  const speech = new SpeechSynthesisUtterance(text);
+  // نفضّل الصوت العربي الأنثوي إن وُجد، ثم صوتًا عربيًا بنبرة طفل واضحة.
+  speech.voice = arabicVoice;
+  speech.lang = "ar-SA";
+  speech.rate = 0.78;
+  speech.pitch = 1.32;
+  speech.volume = 1;
+  speech.onerror = () => {
+    if (!voiceWarningShown) {
+    voiceWarningShown = true;
+      notify("تعذّرت القراءة العربية على هذا الجهاز. تأكد من رفع صوت الجهاز وتفعيل صوت العربية.", true);
     }
   };
   window.speechSynthesis.cancel();
